@@ -374,6 +374,55 @@ private slots:
         QCOMPARE(hdmi[0].layout, QString("scrolling"));
     }
 
+    // Every monitor has workspaces 1-10 of its own (Super + 1 ... Super + 0), which
+    // Hyprland numbers 1-10 for the first monitor and 11-20 for the second.
+    void allTenWorkspacesOfEachMonitorAreKeptApart()
+    {
+        Fixture f;
+        QByteArray workspaces = "[", clients = "[";
+        for (int id = 1; id <= 20; ++id) {
+            const QByteArray monitor = id <= 10 ? "HDMI-A-1" : "DP-1";
+            workspaces += (id > 1 ? "," : "") + QByteArray("{\"id\":") + QByteArray::number(id) + ",\"name\":\"" + QByteArray::number(id)
+                          + "\",\"monitor\":\"" + monitor + "\",\"windows\":1,\"tiledLayout\":\"dwindle\"}";
+            clients += (id > 1 ? "," : "") + QByteArray("{\"class\":\"") + (id <= 10 ? "firefox" : "org.gnome.Nautilus")
+                       + "\",\"workspace\":{\"id\":" + QByteArray::number(id) + "},\"mapped\":true,\"at\":[0,0]}";
+        }
+        write(f.tools + "/workspaces.json", workspaces + "]");
+        write(f.tools + "/clients.json", clients + "]");
+
+        CaptureReport report;
+        QString error;
+        const Scene scene = f.hypr().capture("All", f.catalog(), &report, &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QCOMPARE(scene.monitors.size(), 2);
+        for (const auto &monitor : scene.monitors) {
+            QCOMPARE(monitor.workspaces.size(), 10);
+            for (int i = 0; i < 10; ++i) {
+                QCOMPARE(monitor.workspaces[i].slot, i + 1);
+                // The first monitor in the fixture (DP-1) owns 11-20 and the second 1-10.
+                QCOMPARE(monitor.workspaces[i].apps,
+                         QStringList{monitor.identity == IdentityDP ? "org.gnome.Nautilus" : "firefox"});
+            }
+        }
+
+        // And back: slot 10 of the monitor owning 11-20 is workspace 20, slot 1 of the other is 1.
+        QString saveError;
+        QVERIFY(f.store().save(scene, &saveError));
+        const Hypr hypr = f.hypr();
+        Scene wanted = scene;
+        for (auto &monitor : wanted.monitors)
+            for (auto &workspace : monitor.workspaces)
+                workspace.apps = {"org.gnome.Nautilus", "firefox"}; // one more than is open
+        const Plan plan = buildPlan(wanted, hypr.monitors(&error), hypr.clients(&error), hypr.blocks(), f.catalog(), nullptr);
+        QCOMPARE(plan.launches.size(), 20); // one missing app on each of the twenty workspaces
+        QSet<int> targets;
+        for (const auto &launch : plan.launches)
+            targets.insert(launch.workspace);
+        QCOMPARE(targets.size(), 20);
+        for (int id = 1; id <= 20; ++id)
+            QVERIFY2(targets.contains(id), qPrintable(QString("workspace %1 was not targeted").arg(id)));
+    }
+
     void captureSkipsNamedWorkspacesAndSaysSo()
     {
         Fixture f;
