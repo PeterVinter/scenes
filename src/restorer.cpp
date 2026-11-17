@@ -47,6 +47,15 @@ QString Restorer::focusExpression(const QString &address)
     return QString("hl.dsp.focus({window=%1})").arg(luaQuote("address:" + address));
 }
 
+QStringList Restorer::placeExpressions(const QString &address, const LaunchAction &action)
+{
+    // Absolute layout coordinates: `move` and `resize` set exactly what they are given.
+    const QString window = luaQuote("address:" + address);
+    return {QString("hl.dsp.window.float({action=\"enable\", window=%1})").arg(window),
+            QString("hl.dsp.window.resize({x=%1, y=%2, window=%3})").arg(action.width).arg(action.height).arg(window),
+            QString("hl.dsp.window.move({x=%1, y=%2, window=%3})").arg(action.x).arg(action.y).arg(window)};
+}
+
 QString Restorer::activeAddress(const QByteArray &json)
 {
     return QJsonDocument::fromJson(json).object().value("address").toString();
@@ -154,14 +163,34 @@ void Restorer::handleMatch()
     const LaunchAction &action = m_plan.launches.at(m_index);
     m_opened.append(m_matchedAddress);
     if (m_matchedWorkspace == QString::number(action.workspace)) {
-        ++m_launched; // The rule on the launch worked: already where it belongs.
-        advance();
+        // The rule on the launch worked: already where it belongs.
+        placeOrFinish();
         return;
     }
     m_phase = Phase::Moving;
     // A dispatcher only runs through `dispatch`. `eval` would answer "ok" and do
     // nothing, and `dispatch` also reports when the window is gone.
     m_process.start(m_hyprctl, {"dispatch", moveExpression(m_matchedAddress, action.workspace)});
+}
+
+// The window is on its workspace. A window that was floating gets its geometry
+// now; every other one is done.
+void Restorer::placeOrFinish()
+{
+    const LaunchAction &action = m_plan.launches.at(m_index);
+    if (!action.floating) {
+        ++m_launched;
+        advance();
+        return;
+    }
+    m_placeSteps = placeExpressions(m_matchedAddress, action);
+    placeNext();
+}
+
+void Restorer::placeNext()
+{
+    m_phase = Phase::Placing;
+    m_process.start(m_hyprctl, {"dispatch", m_placeSteps.takeFirst()});
 }
 
 void Restorer::processFinished(int code, QProcess::ExitStatus status)
@@ -195,11 +224,25 @@ void Restorer::processFinished(int code, QProcess::ExitStatus status)
     }
     case Phase::Moving: {
         const LaunchAction &action = m_plan.launches.at(m_index);
-        if (ok)
-            ++m_launched;
-        else
+        if (ok) {
+            placeOrFinish();
+        } else {
             fail(QString("%1: opened, but could not be moved to workspace %2: %3").arg(action.name).arg(action.workspace).arg(reason));
-        advance();
+            advance();
+        }
+        break;
+    }
+    case Phase::Placing: {
+        const LaunchAction &action = m_plan.launches.at(m_index);
+        if (!ok) {
+            fail(QString("%1: opened, but its floating position could not be set: %2").arg(action.name, reason));
+            advance();
+        } else if (m_placeSteps.isEmpty()) {
+            ++m_launched;
+            advance();
+        } else {
+            placeNext();
+        }
         break;
     }
     case Phase::Checking:
@@ -226,6 +269,7 @@ void Restorer::processFailedToStart()
     switch (m_phase) {
     case Phase::Launching:
     case Phase::Moving:
+    case Phase::Placing:
         fail(QString("%1: can't run hyprctl").arg(m_plan.launches.at(m_index).name));
         advance();
         break;

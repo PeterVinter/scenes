@@ -104,10 +104,21 @@ QVariantMap Backend::viewFor(const Scene &scene, bool current) const
         QVariantList workspaces;
         for (const auto &workspace : shown) {
             QVariantList apps;
-            for (const auto &id : workspace.apps)
-                apps.append(QVariantMap{{"id", id},
-                                        {"name", m_catalog.contains(id) ? m_catalog.entry(id).name : id},
-                                        {"installed", m_catalog.contains(id)}});
+            QHash<QString, int> seen;
+            for (const auto &id : workspace.apps) {
+                const int index = seen[id]++;
+                QVariantMap app{{"id", id},
+                                {"name", m_catalog.contains(id) ? m_catalog.entry(id).name : id},
+                                {"installed", m_catalog.contains(id)},
+                                {"floating", false}};
+                for (const auto &window : workspace.floating)
+                    if (window.app == id && window.index == index) {
+                        app["floating"] = true;
+                        app["width"] = window.width;
+                        app["height"] = window.height;
+                    }
+                apps.append(app);
+            }
             workspaces.append(QVariantMap{{"slot", workspace.slot}, {"layout", workspace.layout}, {"apps", apps}});
         }
         monitors.append(QVariantMap{{"identity", monitor.identity},

@@ -43,9 +43,19 @@ QJsonObject Scene::toJson() const
     for (const auto &monitor : monitors) {
         QJsonArray workspaceArray;
         for (const auto &workspace : monitor.workspaces)
-            workspaceArray.append(QJsonObject{{"slot", workspace.slot},
-                                              {"layout", workspace.layout},
-                                              {"apps", QJsonArray::fromStringList(workspace.apps)}});
+        {
+            QJsonObject saved{{"slot", workspace.slot},
+                              {"layout", workspace.layout},
+                              {"apps", QJsonArray::fromStringList(workspace.apps)}};
+            if (!workspace.floating.isEmpty()) {
+                QJsonArray floating;
+                for (const auto &window : workspace.floating)
+                    floating.append(QJsonObject{{"app", window.app}, {"index", window.index}, {"x", window.x},
+                                                {"y", window.y}, {"width", window.width}, {"height", window.height}});
+                saved["floating"] = floating;
+            }
+            workspaceArray.append(saved);
+        }
         monitorArray.append(QJsonObject{{"identity", monitor.identity},
                                         {"make", monitor.make},
                                         {"model", monitor.model},
@@ -108,6 +118,20 @@ bool Scene::fromJson(const QJsonObject &object, Scene *scene, QString *error)
                     return fail(QString("monitor \"%1\": workspace %2 lists an invalid app")
                                     .arg(monitor.identity).arg(workspace.slot));
                 workspace.apps.append(app.toString());
+            }
+            for (const auto &value : workspaceObject.value("floating").toArray()) {
+                const QJsonObject o = value.toObject();
+                WindowGeometry window;
+                window.app = o.value("app").toString();
+                window.index = o.value("index").toInt(-1);
+                window.x = o.value("x").toInt();
+                window.y = o.value("y").toInt();
+                window.width = o.value("width").toInt();
+                window.height = o.value("height").toInt();
+                if (window.app.isEmpty() || window.index < 0 || window.width < 1 || window.height < 1)
+                    return fail(QString("monitor \"%1\": workspace %2 has an invalid floating window")
+                                    .arg(monitor.identity).arg(workspace.slot));
+                workspace.floating.append(window);
             }
             monitor.workspaces.append(workspace);
         }

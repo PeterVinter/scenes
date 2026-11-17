@@ -28,6 +28,9 @@ scenes restore "Coding" --json
 - Monitors are matched by make, model and serial. A scene's monitor that is not
   connected is reported under `unplaced_monitors` and its workspaces are not
   moved onto another monitor. Say so to the user and let them decide.
+- Floating windows are saved with their position and size, relative to their
+  monitor, and `restore` puts the ones it opens back there (scaled if the
+  monitor's resolution changed). `--dry-run` shows them as "floating at X,Y WxH".
 - Layouts are shown but not applied: Omarchy has no command to set the layout
   of a specific workspace. `layouts_not_applied` lists the differences. Do not
   edit Omarchy's state files to work around it.

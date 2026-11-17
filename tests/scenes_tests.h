@@ -117,7 +117,7 @@ struct Fixture {
         "          {\"class\":\"firefox\",\"workspace\":{\"id\":11},\"mapped\":true,\"at\":[0,0]},\n"
         "          {\"class\":\"mystery\",\"workspace\":{\"id\":11},\"mapped\":true,\"at\":[10,0]},\n"
         "          {\"class\":\"scenes\",\"workspace\":{\"id\":11},\"mapped\":true,\"at\":[20,0]},\n"
-        "          {\"class\":\"org.gnome.Nautilus\",\"workspace\":{\"id\":12},\"mapped\":true,\"at\":[0,0]},\n"
+        "          {\"class\":\"org.gnome.Nautilus\",\"workspace\":{\"id\":12},\"mapped\":true,\"floating\":true,\"at\":[120,80],\"size\":[900,600]},\n"
         "          {\"class\":\"firefox\",\"workspace\":{\"id\":-98},\"mapped\":true,\"at\":[0,0]},\n"
         "          {\"class\":\"firefox\",\"workspace\":{\"id\":-99},\"mapped\":true,\"at\":[0,0]}\n"
         "        ]");
@@ -163,7 +163,7 @@ inline Scene sampleScene(const QString &name = "Coding")
     SceneMonitor dp;
     dp.identity = IdentityDP; dp.make = "Acme Displays"; dp.model = "Slate 24"; dp.serial = "SN000001";
     dp.x = 0; dp.y = 0; dp.width = 1920; dp.height = 1080;
-    dp.workspaces = {{1, "dwindle", {"firefox"}}, {2, "floating", {"org.gnome.Nautilus"}}};
+    dp.workspaces = {{1, "dwindle", {"firefox"}}, {2, "floating", {"org.gnome.Nautilus"}, {{"org.gnome.Nautilus", 0, 120, 80, 900, 600}}}};
     SceneMonitor hdmi;
     hdmi.identity = IdentityHDMI; hdmi.model = "Vision 32";
     hdmi.x = 1920; hdmi.width = 2560; hdmi.height = 1440;
@@ -812,6 +812,192 @@ private slots:
                 moves << line;
         QCOMPARE(moves, (QStringList{Restorer::moveExpression("0xa1", 12), Restorer::moveExpression("0xa2", 13),
                                      Restorer::moveExpression("0xa3", 12)}));
+    }
+
+    // --- Floating window geometry -------------------------------------------
+
+    void captureKeepsWhereFloatingWindowsWere()
+    {
+        Fixture f;
+        // A floating Firefox on the second monitor (corner at 1920,0), 100,150 from its corner.
+        write(f.tools + "/clients.json",
+              "[{\"class\":\"firefox\",\"workspace\":{\"id\":1},\"mapped\":true,\"floating\":true,\"at\":[2020,150],\"size\":[800,500]},"
+              "{\"class\":\"firefox\",\"workspace\":{\"id\":1},\"mapped\":true,\"floating\":false,\"at\":[3000,0],\"size\":[600,400]},"
+              "{\"class\":\"org.gnome.Nautilus\",\"workspace\":{\"id\":12},\"mapped\":true,\"floating\":true,\"at\":[120,80],\"size\":[900,600]}]");
+        CaptureReport report;
+        QString error;
+        const Scene scene = f.hypr().capture("Now", f.catalog(), &report, &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        const auto dp = scene.monitors[0].workspaces, hdmi = scene.monitors[1].workspaces;
+
+        QCOMPARE(dp[1].floating.size(), 1);
+        QCOMPARE(dp[1].floating[0].app, QString("org.gnome.Nautilus"));
+        QCOMPARE(dp[1].floating[0].index, 0);
+        QCOMPARE((QList<int>{dp[1].floating[0].x, dp[1].floating[0].y, dp[1].floating[0].width, dp[1].floating[0].height}),
+                 (QList<int>{120, 80, 900, 600}));
+
+        // Relative to its own monitor's corner, so it survives a rearranged layout. The
+        // tiled Firefox beside it has no geometry, and the floating one is the first by position.
+        QCOMPARE(hdmi[0].floating.size(), 1);
+        QCOMPARE(hdmi[0].floating[0].index, 0);
+        QCOMPARE((QList<int>{hdmi[0].floating[0].x, hdmi[0].floating[0].y, hdmi[0].floating[0].width, hdmi[0].floating[0].height}),
+                 (QList<int>{100, 150, 800, 500}));
+    }
+
+    void floatingGeometryRoundTripsAndOlderScenesStillLoad()
+    {
+        const Scene scene = sampleScene();
+        Scene loaded;
+        QString error;
+        QVERIFY2(Scene::fromJson(scene.toJson(), &loaded, &error), qPrintable(error));
+        QCOMPARE(loaded.monitors[0].workspaces[1].floating.size(), 1);
+        QCOMPARE(loaded.toJson(), scene.toJson());
+
+        // A scene saved before geometry existed has no "floating" key at all.
+        QJsonObject old = scene.toJson();
+        QJsonArray monitors = old["monitors"].toArray();
+        QJsonObject monitor = monitors[0].toObject();
+        QJsonArray workspaces = monitor["workspaces"].toArray();
+        QJsonObject workspace = workspaces[1].toObject();
+        workspace.remove("floating");
+        workspaces[1] = workspace;
+        monitor["workspaces"] = workspaces;
+        monitors[0] = monitor;
+        old["monitors"] = monitors;
+        QVERIFY2(Scene::fromJson(old, &loaded, &error), qPrintable(error));
+        QVERIFY(loaded.monitors[0].workspaces[1].floating.isEmpty());
+
+        // Bad geometry is refused, not guessed at.
+        workspace["floating"] = QJsonArray{QJsonObject{{"app", "x"}, {"index", 0}, {"x", 1}, {"y", 1}, {"width", 0}, {"height", 5}}};
+        workspaces[1] = workspace;
+        monitor["workspaces"] = workspaces;
+        monitors[0] = monitor;
+        old["monitors"] = monitors;
+        QVERIFY(!Scene::fromJson(old, &loaded, &error));
+        QVERIFY(error.contains("floating"));
+    }
+
+    void planPutsAFloatingWindowWhereItWasOnAMonitorOfAnotherSize()
+    {
+        Fixture f;
+        // Saved on monitors half the size they are now: positions and sizes double.
+        Scene scene = sampleScene();
+        scene.monitors[0].width = 960;
+        scene.monitors[0].height = 540;
+        scene.monitors[1].width = 1280;
+        scene.monitors[1].height = 720;
+        scene.monitors[0].workspaces[0].apps = {"firefox", "firefox"};
+        scene.monitors[0].workspaces[0].floating = {{"firefox", 1, 50, 40, 300, 200}};   // the second Firefox on DP-1 (corner 0,0)
+        scene.monitors[1].workspaces[0].apps = {"org.gnome.Nautilus", "firefox", "firefox", "firefox"};
+        scene.monitors[1].workspaces[0].floating = {{"firefox", 2, 10, 20, 400, 300}};   // the third Firefox on HDMI (corner 1920,0)
+        const Hypr hypr = f.hypr();
+        QString error;
+        const Plan plan = buildPlan(scene, hypr.monitors(&error), hypr.clients(&error), hypr.blocks(), f.catalog(), nullptr);
+
+        LaunchAction dp, hdmi;
+        for (const auto &launch : plan.launches) {
+            if (launch.workspace == 11 && launch.floating) dp = launch;
+            if (launch.workspace == 1 && launch.floating) hdmi = launch;
+        }
+        // Workspace 11 already has one Firefox, so the second is the one launched, and it floats.
+        QVERIFY(dp.floating);
+        QCOMPARE((QList<int>{dp.x, dp.y, dp.width, dp.height}), (QList<int>{100, 80, 600, 400}));
+        // Workspace 1 has one Firefox, so the third is launched, from the corner at x=1920 and doubled.
+        QVERIFY(hdmi.floating);
+        QCOMPARE((QList<int>{hdmi.x, hdmi.y, hdmi.width, hdmi.height}), (QList<int>{1920 + 20, 40, 800, 600}));
+
+        // A window that is launched but was tiled has no geometry.
+        for (const auto &launch : plan.launches)
+            if (launch.workspace == 1 && !launch.floating)
+                QVERIFY(launch.desktopId == "firefox");
+        QVERIFY(plan.describe().join("\n").contains("floating at 100,80 600x400"));
+        bool json = false;
+        for (const auto &entry : plan.toJson()["launch"].toArray())
+            json = json || entry.toObject().contains("floating");
+        QVERIFY(json);
+    }
+
+    void restorerGivesAFloatingWindowItsGeometryAfterPlacingIt()
+    {
+        Fixture f;
+        const Catalog catalog = f.catalog();
+        EventSocket events;
+        Plan plan;
+        LaunchAction action{"firefox", "Firefox", 12, "x"};
+        action.floating = true;
+        action.x = 300; action.y = 200; action.width = 900; action.height = 600;
+        plan.launches = {action};
+        Restorer restorer(plan, catalog, f.hyprctl, events.path);
+        events.accept();
+        QSignalSpy finished(&restorer, &Restorer::finished);
+        connect(&restorer, &Restorer::progress, this, [&] { opens(events, f, "fff666", "1", "firefox", false); });
+        restorer.start();
+        QTRY_COMPARE(finished.count(), 1);
+        QCOMPARE(restorer.launched(), 1);
+        QVERIFY2(restorer.failures().isEmpty(), qPrintable(restorer.failures().join(";")));
+        // Onto its workspace first, then floating, then the size, then the position.
+        QCOMPARE(f.dispatches(), (QStringList{Restorer::moveExpression("0xfff666", 12),
+                                              "hl.dsp.window.float({action=\"enable\", window=\"address:0xfff666\"})",
+                                              "hl.dsp.window.resize({x=900, y=600, window=\"address:0xfff666\"})",
+                                              "hl.dsp.window.move({x=300, y=200, window=\"address:0xfff666\"})"}));
+    }
+
+    void restorerPlacesAFloatingWindowThatOpenedInTheRightWorkspace()
+    {
+        Fixture f;
+        const Catalog catalog = f.catalog();
+        EventSocket events;
+        Plan plan;
+        LaunchAction action{"firefox", "Firefox", 12, "x"};
+        action.floating = true;
+        action.x = 10; action.y = 20; action.width = 300; action.height = 200;
+        plan.launches = {action};
+        Restorer restorer(plan, catalog, f.hyprctl, events.path);
+        events.accept();
+        QSignalSpy finished(&restorer, &Restorer::finished);
+        connect(&restorer, &Restorer::progress, this, [&] { opens(events, f, "abc777", "12", "firefox", false); });
+        restorer.start();
+        QTRY_COMPARE(finished.count(), 1);
+        QCOMPARE(f.dispatches().size(), 3); // no move to a workspace it is already on: float, size, position
+        QCOMPARE(restorer.launched(), 1);
+    }
+
+    void restorerReportsAGeometryHyprlandRefuses()
+    {
+        Fixture f;
+        const Catalog catalog = f.catalog();
+        EventSocket events;
+        Plan plan;
+        LaunchAction action{"firefox", "Firefox", 12, "x"};
+        action.floating = true;
+        action.x = 10; action.y = 20; action.width = 300; action.height = 200;
+        plan.launches = {action};
+        Restorer restorer(plan, catalog, f.hyprctl, events.path);
+        events.accept();
+        QSignalSpy finished(&restorer, &Restorer::finished);
+        // The fake refuses any dispatch for this address, as Hyprland does for a window that is gone.
+        connect(&restorer, &Restorer::progress, this, [&] { opens(events, f, "gone", "12", "firefox", false); });
+        restorer.start();
+        QTRY_COMPARE(finished.count(), 1);
+        QCOMPARE(restorer.launched(), 0);
+        QCOMPARE(restorer.failures().size(), 1);
+        QVERIFY2(restorer.failures()[0].contains("floating position could not be set"), qPrintable(restorer.failures()[0]));
+    }
+
+    void viewMarksWhichWindowsFloat()
+    {
+        Fixture f;
+        QString error;
+        QVERIFY(f.store().save(sampleScene("Coding"), &error));
+        const Catalog catalog = f.catalog();
+        Backend backend(f.store(), f.hypr(), catalog, nullptr, f.hyprctl);
+        backend.setEventSocket(f.dir.filePath("none.sock"));
+        backend.select("coding");
+        const auto first = backend.view().value("monitors").toList()[0].toMap().value("workspaces").toList();
+        const QVariantMap files = first[1].toMap().value("apps").toList()[0].toMap();
+        QVERIFY(files.value("floating").toBool());
+        QCOMPARE(files.value("width").toInt(), 900);
+        QVERIFY(!first[0].toMap().value("apps").toList()[0].toMap().value("floating").toBool());
     }
 
     void eventsReportEachOpenedWindow()

@@ -38,7 +38,14 @@ Plan buildPlan(const Scene &scene, const QJsonArray &monitors, const QJsonArray 
             continue;
         }
 
-        const int block = Hypr::blockFor(connected.value(sceneMonitor.identity), blocks);
+        const QJsonObject current = connected.value(sceneMonitor.identity);
+        const int block = Hypr::blockFor(current, blocks);
+        // The monitor's own place in the layout, and how much bigger or smaller it
+        // is than when the scene was saved, so a floating window keeps its place
+        // on a monitor that has a different resolution now.
+        const double scale = qMax(0.1, current.value("scale").toDouble(1.0));
+        const double scaleX = sceneMonitor.width > 0 ? current.value("width").toDouble() / scale / sceneMonitor.width : 1.0;
+        const double scaleY = sceneMonitor.height > 0 ? current.value("height").toDouble() / scale / sceneMonitor.height : 1.0;
         for (const auto &workspace : sceneMonitor.workspaces) {
             const int id = block * 10 + workspace.slot;
 
@@ -57,8 +64,19 @@ Plan buildPlan(const Scene &scene, const QJsonArray &monitors, const QJsonArray 
                 }
                 const int have = running.value(id).value(app);
                 plan.alreadyRunning += qMin(have, wanted.value(app));
-                for (int n = have; n < wanted.value(app); ++n)
-                    plan.launches.append({app, catalog.entry(app).name, id, sceneMonitor.label()});
+                for (int n = have; n < wanted.value(app); ++n) {
+                    LaunchAction action{app, catalog.entry(app).name, id, sceneMonitor.label()};
+                    for (const auto &window : workspace.floating) {
+                        if (window.app != app || window.index != n)
+                            continue;
+                        action.floating = true;
+                        action.x = current.value("x").toInt() + qRound(window.x * scaleX);
+                        action.y = current.value("y").toInt() + qRound(window.y * scaleY);
+                        action.width = qMax(1, qRound(window.width * scaleX));
+                        action.height = qMax(1, qRound(window.height * scaleY));
+                    }
+                    plan.launches.append(action);
+                }
             }
 
             const QString current = currentLayout ? currentLayout(id) : QString();
@@ -73,8 +91,13 @@ QJsonObject Plan::toJson() const
 {
     QJsonArray launchArray, layoutArray, unplacedArray;
     for (const auto &launch : launches)
-        launchArray.append(QJsonObject{{"app", launch.desktopId}, {"name", launch.name},
-                                       {"workspace", launch.workspace}, {"monitor", launch.monitor}});
+    {
+        QJsonObject entry{{"app", launch.desktopId}, {"name", launch.name},
+                          {"workspace", launch.workspace}, {"monitor", launch.monitor}};
+        if (launch.floating)
+            entry["floating"] = QJsonObject{{"x", launch.x}, {"y", launch.y}, {"width", launch.width}, {"height", launch.height}};
+        launchArray.append(entry);
+    }
     for (const auto &layout : layouts)
         layoutArray.append(QJsonObject{{"workspace", layout.workspace}, {"slot", layout.slot},
                                        {"monitor", layout.monitor}, {"wanted", layout.wanted},
@@ -97,7 +120,9 @@ QStringList Plan::describe() const
 {
     QStringList lines;
     for (const auto &launch : launches)
-        lines << QString("launch %1 on workspace %2 (%3)").arg(launch.desktopId).arg(launch.workspace).arg(launch.monitor);
+        lines << QString("launch %1 on workspace %2 (%3)%4").arg(launch.desktopId).arg(launch.workspace).arg(launch.monitor)
+                     .arg(launch.floating ? QString(", floating at %1,%2 %3x%4").arg(launch.x).arg(launch.y).arg(launch.width).arg(launch.height)
+                                          : QString());
     for (const auto &monitor : unplaced)
         lines << QString("skip monitor %1: not connected (workspaces %2, apps: %3)")
                      .arg(monitor.label, [&] { QStringList list; for (int n : monitor.workspaceSlots) list << QString::number(n); return list.join(','); }())

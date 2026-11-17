@@ -154,7 +154,7 @@ Scene Hypr::capture(const QString &name, const Catalog &catalog, CaptureReport *
 
     // A window that can't be matched to an installed desktop entry has no id to
     // store, so it is counted and left out rather than guessed.
-    struct Window { QString id; int x, y; };
+    struct Window { QString id; int x, y; bool floating; int width, height; };
     QHash<int, QList<Window>> windowsByWorkspace;
     for (const auto &value : clientList) {
         const QJsonObject client = value.toObject();
@@ -170,7 +170,9 @@ Scene Hypr::capture(const QString &name, const Catalog &catalog, CaptureReport *
             continue;
         }
         const QJsonArray at = client.value("at").toArray();
-        windowsByWorkspace[workspace].append({id, at.at(0).toInt(), at.at(1).toInt()});
+        const QJsonArray size = client.value("size").toArray();
+        windowsByWorkspace[workspace].append({id, at.at(0).toInt(), at.at(1).toInt(), client.value("floating").toBool(),
+                                              size.at(0).toInt(), size.at(1).toInt()});
     }
 
     for (const auto &value : workspaceList) {
@@ -210,8 +212,17 @@ Scene Hypr::capture(const QString &name, const Catalog &catalog, CaptureReport *
         std::stable_sort(windows.begin(), windows.end(), [](const Window &a, const Window &b) {
             return a.x != b.x ? a.x < b.x : a.y < b.y;
         });
-        for (const auto &window : windows)
+        QHash<QString, int> seen;
+        for (const auto &window : windows) {
             saved.apps.append(window.id);
+            // A floating window keeps where it was, from its monitor's corner. Its
+            // index counts the app's windows on this workspace, tiled or not,
+            // in the same order the scene lists them.
+            const int index = seen[window.id]++;
+            if (window.floating && window.width > 0 && window.height > 0)
+                saved.floating.append({window.id, index, window.x - infos[owner].monitor.x, window.y - infos[owner].monitor.y,
+                                       window.width, window.height});
+        }
         infos[owner].monitor.workspaces.append(saved);
     }
 

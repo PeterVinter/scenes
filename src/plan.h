@@ -13,6 +13,10 @@ struct LaunchAction {
     QString name;
     int workspace = 0;
     QString monitor; // Label, for messages.
+    // Set for a window that was floating: where it goes, in layout coordinates
+    // (the target monitor's corner added, and scaled if its resolution differs).
+    bool floating = false;
+    int x = 0, y = 0, width = 0, height = 0;
 };
 
 // A workspace whose layout differs from the scene's. Omarchy has no command to

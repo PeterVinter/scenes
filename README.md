@@ -4,8 +4,8 @@
 
 Save and restore named setups of your [Omarchy](https://omarchy.org) desktop.
 
-A scene records, for each physical monitor and each workspace, the layout and
-the apps open on it. Restoring a scene opens the apps that are missing, on the
+A scene records, for each physical monitor and each workspace, the layout, the
+apps open on it, and where each floating window sat. Restoring a scene opens the apps that are missing, on the
 workspaces they belong to. Think "Coding", "Meeting", "Writing".
 
 The window follows the Omarchy theme live (accent, light or dark, window
@@ -66,6 +66,11 @@ atomically. Set `SCENES_DIR` to use another directory.
   name like `DP-1`, which a dock changes. If a scene's monitor isn't connected,
   its workspaces are reported as not placed. They are never moved onto another
   monitor.
+- **Floating windows keep their place.** A window that was floating is saved
+  with its position and size, measured from its monitor's corner. When restore
+  opens it, it is made floating and put there, scaled if that monitor has a
+  different resolution now. This only applies to windows restore opens itself;
+  one that is already open is never moved or resized.
 - **Workspaces are matched per monitor** through Omarchy's block of ten
   workspace ids per monitor, read from `~/.local/state/omarchy/monitor-workspaces`.
 - **Named workspaces are skipped.** Hyprland reports a negative id for them, and
@@ -91,7 +96,6 @@ the scene format.
 
 Out of scope for v1:
 
-- Exact floating window geometry
 - Terminal working directories
 - Browser tabs
 - Applying layouts (see the gap above)

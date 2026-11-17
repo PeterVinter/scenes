@@ -44,6 +44,8 @@ public:
     static QString launchExpression(const LaunchAction &action, const Catalog &catalog);
     static QString moveExpression(const QString &address, int workspace);
     static QString focusExpression(const QString &address);
+    // The three steps that give a window its floating geometry, in order.
+    static QStringList placeExpressions(const QString &address, const LaunchAction &action);
 
 signals:
     void progress(int done, int total, const QString &app);
@@ -51,7 +53,7 @@ signals:
     void finished();
 
 private:
-    enum class Phase { Idle, Reading, Launching, Waiting, Moving, Checking, Refocusing };
+    enum class Phase { Idle, Reading, Launching, Waiting, Moving, Placing, Checking, Refocusing };
 
     void next();
     void launched(const QString &address);
@@ -62,6 +64,8 @@ private:
     void processFinished(int code, QProcess::ExitStatus status);
     void processFailedToStart();
     void handleMatch();
+    void placeOrFinish();
+    void placeNext();
     void finishWithFocus();
     static QString activeAddress(const QByteArray &json);
 
@@ -80,4 +84,5 @@ private:
     QString m_matchedAddress, m_matchedWorkspace;
     QString m_previousActive;
     QStringList m_opened;
+    QStringList m_placeSteps;
 };

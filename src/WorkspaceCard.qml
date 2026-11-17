@@ -64,7 +64,11 @@ Rectangle {
                     opacity: icon.modelData.installed ? 1 : 0.4
                     HoverHandler { id: iconHover }
                     ToolTip.visible: iconHover.hovered
-                    ToolTip.text: icon.modelData.installed ? icon.modelData.name : qsTr("%1 (not installed)").arg(icon.modelData.name)
+                    ToolTip.text: !icon.modelData.installed ? qsTr("%1 (not installed)").arg(icon.modelData.name)
+                                  : icon.modelData.floating ? qsTr("%1 (floating, %2 × %3)").arg(icon.modelData.name)
+                                        .arg(Number(icon.modelData.width).toLocaleString(Qt.locale(), "f", 0))
+                                        .arg(Number(icon.modelData.height).toLocaleString(Qt.locale(), "f", 0))
+                                  : icon.modelData.name
                 }
             }
         }
