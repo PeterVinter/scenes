@@ -135,6 +135,12 @@ Popup {
                 }
                 Label {
                     Layout.fillWidth: true
+                    Layout.topMargin: 4
+                    horizontalAlignment: Text.AlignHCenter
+                    text: qsTr("Made by %1").arg("Peter Vinter")
+                }
+                Label {
+                    Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     text: qsTr("Released under the MIT License.")
                     color: theme.secondary
