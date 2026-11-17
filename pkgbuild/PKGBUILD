@@ -1,6 +1,6 @@
 pkgname=scenes
 pkgver=0.1.0
-pkgrel=2
+pkgrel=3
 pkgdesc='Save and restore named setups of the Omarchy desktop'
 arch=('x86_64' 'aarch64')
 license=('MIT')
