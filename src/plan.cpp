@@ -31,7 +31,7 @@ Plan buildPlan(const Scene &scene, const QJsonArray &monitors, const QJsonArray 
             unplaced.identity = sceneMonitor.identity;
             unplaced.label = sceneMonitor.label();
             for (const auto &workspace : sceneMonitor.workspaces) {
-                unplaced.slots.append(workspace.slot);
+                unplaced.workspaceSlots.append(workspace.slot);
                 unplaced.appCount += workspace.apps.size();
             }
             plan.unplaced.append(unplaced);
@@ -80,11 +80,11 @@ QJsonObject Plan::toJson() const
                                        {"monitor", layout.monitor}, {"wanted", layout.wanted},
                                        {"current", layout.current}, {"applied", false}});
     for (const auto &monitor : unplaced) {
-        QJsonArray slots;
-        for (int slot : monitor.slots)
-            slots.append(slot);
+        QJsonArray slotArray;
+        for (int slot : monitor.workspaceSlots)
+            slotArray.append(slot);
         unplacedArray.append(QJsonObject{{"identity", monitor.identity}, {"monitor", monitor.label},
-                                         {"workspaces", slots}, {"apps", monitor.appCount}});
+                                         {"workspaces", slotArray}, {"apps", monitor.appCount}});
     }
     return QJsonObject{{"launch", launchArray},
                        {"layouts_not_applied", layoutArray},
@@ -99,8 +99,8 @@ QStringList Plan::describe() const
     for (const auto &launch : launches)
         lines << QString("launch %1 on workspace %2 (%3)").arg(launch.desktopId).arg(launch.workspace).arg(launch.monitor);
     for (const auto &monitor : unplaced)
-        lines << QString("skip monitor %1: not connected (workspaces %2, %3 apps)")
-                     .arg(monitor.label, [&] { QStringList s; for (int n : monitor.slots) s << QString::number(n); return s.join(','); }())
+        lines << QString("skip monitor %1: not connected (workspaces %2, apps: %3)")
+                     .arg(monitor.label, [&] { QStringList list; for (int n : monitor.workspaceSlots) list << QString::number(n); return list.join(','); }())
                      .arg(monitor.appCount);
     for (const auto &app : missingApps)
         lines << QString("skip %1: not installed").arg(app);

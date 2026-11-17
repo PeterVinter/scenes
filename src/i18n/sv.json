@@ -1,0 +1,87 @@
+{
+  "Scenes": "Scener",
+  "Current desktop": "Nuvarande skrivbord",
+  "What is open right now": "Det som är öppet just nu",
+  "%1, %2": "%1, %2",
+  "%1, %2, %3": "%1, %2, %3",
+  "No scenes yet": "Inga scener än",
+  "Arrange your desktop the way you want it, then press N to save it as a scene.": "Ordna skrivbordet som du vill ha det och tryck sedan på N för att spara det som en scen.",
+  "Press ? for shortcuts": "Tryck på ? för kortkommandon",
+  "Save as scene": "Spara som scen",
+  "Restore": "Återställ",
+  "Rename": "Byt namn",
+  "Delete": "Ta bort",
+  "Opening %1 (%2 of %3)": "Öppnar %1 (%2 av %3)",
+  "Checking the desktop…": "Kontrollerar skrivbordet …",
+  "The current desktop can't be read: %1": "Det nuvarande skrivbordet kan inte läsas: %1",
+  "Restore opens the apps that are missing from their workspaces and never closes or moves a window. Layouts are shown but not applied: Omarchy has no command to set the layout of a specific workspace.": "Återställ öppnar de appar som saknas på sina arbetsytor och stänger eller flyttar aldrig något fönster. Layouter visas men tillämpas inte: Omarchy har inget kommando för att ställa in layouten för en viss arbetsyta.",
+  "Not connected": "Inte ansluten",
+  "Not connected: its workspaces won't be restored.": "Inte ansluten: dess arbetsytor återställs inte.",
+  "Tiling": "Tiling",
+  "Scrolling": "Rullande",
+  "Floating": "Flytande",
+  "Workspace %1": "Arbetsyta %1",
+  "%1 (not installed)": "%1 (inte installerad)",
+  "Empty": "Tom",
+  "Nothing to open: every app is already where the scene wants it.": "Inget att öppna: alla appar finns redan där scenen vill ha dem.",
+  "Dismiss": "Stäng",
+  "Couldn't start %1": "Kunde inte starta %1",
+  "Not installed here: %1": "Inte installerad här: %1",
+  "Layout not applied on workspace %1: the scene has %2, it is %3.": "Layouten tillämpades inte på arbetsyta %1: scenen har %2, men den är %3.",
+  "Name": "Namn",
+  "Cancel": "Avbryt",
+  "Save": "Spara",
+  "Rename scene": "Byt namn på scen",
+  "Delete scene?": "Ta bort scenen?",
+  "“%1” will be deleted. Ctrl+Z brings it back.": "”%1” tas bort. Ctrl+Z får tillbaka den.",
+  "Keyboard shortcuts": "Kortkommandon",
+  "Restore the selected scene": "Återställ den valda scenen",
+  "Save the current desktop as a new scene": "Spara det nuvarande skrivbordet som en ny scen",
+  "Rename the selected scene": "Byt namn på den valda scenen",
+  "Delete the selected scene": "Ta bort den valda scenen",
+  "Select the previous or next scene": "Välj föregående eller nästa scen",
+  "Undo a delete or rename": "Ångra borttagning eller namnbyte",
+  "Redo": "Gör om",
+  "Show or hide this help": "Visa eller dölj den här hjälpen",
+  "Quit": "Avsluta",
+  "Give the scene a name.": "Ge scenen ett namn.",
+  "A scene called “%1” already exists.": "Det finns redan en scen som heter ”%1”.",
+  "Select a scene to rename.": "Välj en scen att byta namn på.",
+  "Select a scene to delete.": "Välj en scen att ta bort.",
+  "%Ln apps": {
+    "one": "%Ln app",
+    "other": "%Ln appar"
+  },
+  "%Ln workspaces": {
+    "one": "%Ln arbetsyta",
+    "other": "%Ln arbetsytor"
+  },
+  "%Ln monitors": {
+    "one": "%Ln skärm",
+    "other": "%Ln skärmar"
+  },
+  "%Ln scene files couldn't be read: %1": {
+    "one": "%Ln scenfil kunde inte läsas: %1",
+    "other": "%Ln scenfiler kunde inte läsas: %1"
+  },
+  "%Ln named workspaces are skipped: %1": {
+    "one": "%Ln namngiven arbetsyta hoppas över: %1",
+    "other": "%Ln namngivna arbetsytor hoppas över: %1"
+  },
+  "%Ln windows without a desktop entry are left out: %1": {
+    "one": "%Ln fönster utan skrivbordspost utelämnas: %1",
+    "other": "%Ln fönster utan skrivbordspost utelämnas: %1"
+  },
+  "Opened %Ln apps.": {
+    "one": "Öppnade %Ln app.",
+    "other": "Öppnade %Ln appar."
+  },
+  "%Ln were already open.": {
+    "one": "%Ln var redan öppen.",
+    "other": "%Ln var redan öppna."
+  },
+  "%1 isn't connected: its %Ln workspaces were not placed.": {
+    "one": "%1 är inte ansluten: dess %Ln arbetsyta placerades inte.",
+    "other": "%1 är inte ansluten: dess %Ln arbetsytor placerades inte."
+  }
+}

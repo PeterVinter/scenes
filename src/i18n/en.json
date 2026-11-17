@@ -1,0 +1,38 @@
+{
+  "%Ln apps": {
+    "one": "%Ln app",
+    "other": "%Ln apps"
+  },
+  "%Ln workspaces": {
+    "one": "%Ln workspace",
+    "other": "%Ln workspaces"
+  },
+  "%Ln monitors": {
+    "one": "%Ln monitor",
+    "other": "%Ln monitors"
+  },
+  "%Ln scene files couldn't be read: %1": {
+    "one": "%Ln scene file couldn't be read: %1",
+    "other": "%Ln scene files couldn't be read: %1"
+  },
+  "%Ln named workspaces are skipped: %1": {
+    "one": "%Ln named workspace is skipped: %1",
+    "other": "%Ln named workspaces are skipped: %1"
+  },
+  "%Ln windows without a desktop entry are left out: %1": {
+    "one": "%Ln window without a desktop entry is left out: %1",
+    "other": "%Ln windows without a desktop entry are left out: %1"
+  },
+  "Opened %Ln apps.": {
+    "one": "Opened %Ln app.",
+    "other": "Opened %Ln apps."
+  },
+  "%Ln were already open.": {
+    "one": "%Ln was already open.",
+    "other": "%Ln were already open."
+  },
+  "%1 isn't connected: its %Ln workspaces were not placed.": {
+    "one": "%1 isn't connected: its %Ln workspace was not placed.",
+    "other": "%1 isn't connected: its %Ln workspaces were not placed."
+  }
+}

@@ -11,6 +11,7 @@ class HyprEvents : public QObject {
 
 public:
     explicit HyprEvents(const QString &socketPath = {}, QObject *parent = nullptr);
+    ~HyprEvents() override;
 
     bool connected() const { return m_socket.state() == QLocalSocket::ConnectedState; }
     static QString defaultSocketPath();

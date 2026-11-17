@@ -49,6 +49,15 @@ HyprEvents::HyprEvents(const QString &socketPath, QObject *parent)
         connectNow();
 }
 
+HyprEvents::~HyprEvents()
+{
+    // The socket outlives the timers its signals restart, so stop listening
+    // before it closes.
+    m_socket.disconnect(this);
+    m_reconnect.stop();
+    m_socket.abort();
+}
+
 void HyprEvents::connectNow()
 {
     if (m_socket.state() != QLocalSocket::UnconnectedState)

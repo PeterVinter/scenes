@@ -236,7 +236,10 @@ QString Backend::remove()
     if (!existing)
         return tr("Select a scene to delete.");
     const Scene scene = *existing;
-    const int index = m_savedScenes.indexOf(scene);
+    int index = 0;
+    for (int i = 0; i < m_savedScenes.size(); ++i)
+        if (m_savedScenes[i].slug() == scene.slug())
+            index = i;
     QString error;
     if (!m_store.remove(scene.slug(), &error))
         return error;
@@ -347,7 +350,7 @@ void Backend::finishRestore(const Plan &plan, const QString &slug)
 {
     QVariantList unplaced, layouts;
     for (const auto &monitor : plan.unplaced)
-        unplaced.append(QVariantMap{{"label", monitor.label}, {"workspaces", monitor.slots.size()}, {"apps", monitor.appCount}});
+        unplaced.append(QVariantMap{{"label", monitor.label}, {"workspaces", monitor.workspaceSlots.size()}, {"apps", monitor.appCount}});
     for (const auto &layout : plan.layouts)
         layouts.append(QVariantMap{{"workspace", layout.workspace}, {"slot", layout.slot}, {"monitor", layout.monitor},
                                    {"wanted", layout.wanted}, {"current", layout.current}});

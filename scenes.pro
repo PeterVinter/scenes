@@ -1,6 +1,7 @@
 QT += core gui qml quick quickcontrols2 network concurrent
 
-CONFIG += c++17 release
+CONFIG += c++17 release warn_on
+QMAKE_CXXFLAGS += -Wall -Wextra
 TARGET = scenes
 TEMPLATE = app
 

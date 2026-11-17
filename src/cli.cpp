@@ -122,7 +122,7 @@ int save(CliContext &c, const Options &o, QTextStream &out, QTextStream &err)
         err << "scenes: warning: skipped named workspaces (" << report.skippedNamed.join(", ")
             << "): Hyprland gives them negative ids, which can't be targeted safely\n";
     if (report.unmappedWindows > 0)
-        err << "scenes: warning: " << report.unmappedWindows << " windows have no desktop entry and were left out ("
+        err << "scenes: warning: windows without a desktop entry were left out: " << report.unmappedWindows << " ("
             << report.unmappedClasses.join(", ") << ")\n";
     return 0;
 }
@@ -193,13 +193,13 @@ int restore(CliContext &c, const Options &o, QTextStream &out, QTextStream &err)
     for (const auto &failure : failures)
         err << "scenes: failed to start " << failure << "\n";
     for (const auto &monitor : plan.unplaced)
-        err << "scenes: monitor " << monitor.label << " is not connected; its " << monitor.slots.size()
-            << " workspaces were not placed\n";
+        err << "scenes: monitor " << monitor.label << " is not connected; workspaces not placed: "
+            << monitor.workspaceSlots.size() << "\n";
     for (const auto &app : plan.missingApps)
         err << "scenes: " << app << " is not installed\n";
     if (!plan.layouts.isEmpty())
-        err << "scenes: warning: " << plan.layouts.size()
-            << " workspace layouts differ and were not applied: Omarchy has no command to set the layout of a given workspace\n";
+        err << "scenes: warning: layouts that differ and were not applied: " << plan.layouts.size()
+            << " (Omarchy has no command to set the layout of a given workspace)\n";
     return failures.isEmpty() && !plan.hasProblems() ? 0 : 1;
 }
 

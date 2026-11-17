@@ -26,7 +26,7 @@ struct LayoutGap {
 
 struct UnplacedMonitor {
     QString identity, label;
-    QList<int> slots;
+    QList<int> workspaceSlots;
     int appCount = 0;
 };
 

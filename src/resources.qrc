@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="Main.qml">Main.qml</file>
+        <file alias="SceneSidebar.qml">SceneSidebar.qml</file>
+        <file alias="SceneRow.qml">SceneRow.qml</file>
+        <file alias="SceneDetail.qml">SceneDetail.qml</file>
+        <file alias="MonitorMap.qml">MonitorMap.qml</file>
+        <file alias="MonitorPanel.qml">MonitorPanel.qml</file>
+        <file alias="WorkspaceCard.qml">WorkspaceCard.qml</file>
+        <file alias="RestoreResult.qml">RestoreResult.qml</file>
+        <file alias="SceneNameDialog.qml">SceneNameDialog.qml</file>
+        <file alias="ConfirmDeleteDialog.qml">ConfirmDeleteDialog.qml</file>
+        <file alias="ShortcutHelp.qml">ShortcutHelp.qml</file>
+        <file alias="skill/SKILL.md">skill/SKILL.md</file>
+        <file alias="i18n/en.json">i18n/en.json</file>
+        <file alias="i18n/sv.json">i18n/sv.json</file>
+    </qresource>
+</RCC>
