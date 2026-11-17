@@ -103,6 +103,10 @@ the scene format.
 
 Out of scope for v1:
 
+- Saving or restoring part of the desktop. Today a scene is always the whole
+  desktop, every monitor and every workspace, saved and restored at once. A
+  later version could save only one workspace or only one monitor ("save just
+  this monitor"), and restore a scene on selected monitors only.
 - Terminal working directories
 - Browser tabs
 - Applying layouts (see the gap above)
