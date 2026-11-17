@@ -52,7 +52,14 @@ atomically. Set `SCENES_DIR` to use another directory.
 
 - **It only adds.** It opens apps that are missing from a workspace and never
   closes or moves a window that is already open. Apps are launched the way
-  Omarchy launches them, with a workspace rule so they open in the background.
+  Omarchy launches them.
+- **Each new window is placed.** Apps that hand over to a running instance
+  (Files, Chromium, Firefox) ignore a workspace rule and open on the active
+  workspace. So after each launch Scenes waits for that app's new window on
+  Hyprland's event socket, moves it to its workspace without following it, and
+  gives focus back. Only a window that opened after the launch, and whose class
+  belongs to the app, is ever moved. If no window appears within ten seconds,
+  the app is reported as failed.
 - **Monitors are bound by identity** (make, model, serial), not by connector
   name like `DP-1`, which a dock changes. If a scene's monitor isn't connected,
   its workspaces are reported as not placed. They are never moved onto another

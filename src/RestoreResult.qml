@@ -81,6 +81,13 @@ Rectangle {
 
         Label {
             Layout.fillWidth: true
+            visible: box.result.unverified === true
+            text: qsTr("Hyprland's event socket couldn't be reached, so windows could not be confirmed or moved to their workspaces.")
+            wrapMode: Text.Wrap
+        }
+
+        Label {
+            Layout.fillWidth: true
             visible: box.result.missing !== undefined && box.result.missing.length > 0
             text: box.result.missing === undefined ? "" : qsTr("Not installed here: %1").arg(box.result.missing.join(", "))
             wrapMode: Text.Wrap

@@ -21,8 +21,10 @@ scenes restore "Coding" --json
 ## Rules
 
 - Run `restore --dry-run` first and read it before a real restore.
-- Restore only adds: it opens apps that are missing from a workspace. It never
-  closes or moves a window that is already open.
+- Restore only adds: it opens apps that are missing from a workspace and moves
+  each new window to its workspace. It never closes or moves a window that was
+  already open. An app that opens no window within ten seconds is reported in
+  `failed`.
 - Monitors are matched by make, model and serial. A scene's monitor that is not
   connected is reported under `unplaced_monitors` and its workspaces are not
   moved onto another monitor. Say so to the user and let them decide.

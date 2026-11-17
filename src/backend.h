@@ -68,6 +68,9 @@ public:
     Q_INVOKABLE QString selectedName() const;
     Q_INVOKABLE void restore();
     Q_INVOKABLE void dismissResult();
+    // Tests point restores at a fake socket; empty means Hyprland's own.
+    void setEventSocket(const QString &path) { m_eventSocket = path; }
+    void setWindowTimeout(int milliseconds) { m_windowTimeout = milliseconds; }
 
 signals:
     void scenesChanged();
@@ -103,6 +106,8 @@ private:
     const Catalog &m_catalog;
     HyprEvents *m_events;
     QString m_hyprctl;
+    QString m_eventSocket;
+    int m_windowTimeout = 10000;
 
     QList<Scene> m_savedScenes;
     QVariantList m_sceneList;

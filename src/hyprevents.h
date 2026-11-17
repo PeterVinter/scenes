@@ -19,6 +19,9 @@ public:
     static bool relevant(const QString &event);
 
 signals:
+    // A window opened: its address ("0x..."), the name of its workspace and its
+    // class. Not debounced, so a restore can claim the window it just launched.
+    void windowOpened(const QString &address, const QString &workspace, const QString &windowClass);
     // Debounced: a burst of events (a workspace switch) is one change.
     void desktopChanged();
     void connectionChanged();

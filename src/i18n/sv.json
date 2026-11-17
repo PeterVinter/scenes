@@ -83,5 +83,6 @@
   "%1 isn't connected: its %Ln workspaces were not placed.": {
     "one": "%1 är inte ansluten: dess %Ln arbetsyta placerades inte.",
     "other": "%1 är inte ansluten: dess %Ln arbetsytor placerades inte."
-  }
+  },
+  "Hyprland's event socket couldn't be reached, so windows could not be confirmed or moved to their workspaces.": "Hyprlands händelsesocket gick inte att nå, så fönster kunde inte bekräftas eller flyttas till sina arbetsytor."
 }

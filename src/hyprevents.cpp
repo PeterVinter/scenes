@@ -74,7 +74,14 @@ void HyprEvents::readLines()
         const QString line = QString::fromUtf8(m_buffer.left(newline));
         m_buffer.remove(0, newline + 1);
         // "event>>data"
-        if (relevant(line.section(">>", 0, 0)))
+        const QString event = line.section(">>", 0, 0);
+        if (event == "openwindow") {
+            // openwindow>>ADDRESS,WORKSPACE,CLASS,TITLE; the title may hold commas.
+            const QStringList fields = line.section(">>", 1).split(',');
+            if (fields.size() >= 3)
+                emit windowOpened("0x" + fields[0], fields[1], fields[2]);
+        }
+        if (relevant(event))
             m_debounce.start();
     }
 }

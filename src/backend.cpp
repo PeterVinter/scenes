@@ -323,7 +323,8 @@ void Backend::restore()
         }
         m_progressTotal = plan.launches.size();
         emit progressChanged();
-        m_restorer = std::make_unique<Restorer>(plan, m_catalog, m_hyprctl);
+        m_restorer = std::make_unique<Restorer>(plan, m_catalog, m_hyprctl, m_eventSocket);
+        m_restorer->setWindowTimeout(m_windowTimeout);
         connect(m_restorer.get(), &Restorer::progress, this, [this](int done, int total, const QString &app) {
             m_progressDone = done;
             m_progressTotal = total;
@@ -362,6 +363,7 @@ void Backend::finishRestore(const Plan &plan, const QString &slug)
                 {"launched", m_restorer ? m_restorer->launched() : 0},
                 {"alreadyRunning", plan.alreadyRunning},
                 {"failed", m_restorer ? m_restorer->failures() : QStringList()},
+                {"unverified", m_restorer ? !m_restorer->verified() : false},
                 {"unplaced", unplaced},
                 {"layouts", layouts},
                 {"missing", missing}};

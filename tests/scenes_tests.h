@@ -28,9 +28,9 @@
 #include "theme.h"
 #include "translator.h"
 
-namespace {
+namespace support {
 
-void write(const QString &path, const QByteArray &contents, bool executable = false)
+inline void write(const QString &path, const QByteArray &contents, bool executable = false)
 {
     QDir().mkpath(QFileInfo(path).absolutePath());
     QFile file(path);
@@ -41,20 +41,20 @@ void write(const QString &path, const QByteArray &contents, bool executable = fa
         QFile::setPermissions(path, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
 }
 
-QByteArray read(const QString &path)
+inline QByteArray read(const QString &path)
 {
     QFile file(path);
     return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
 }
 
-void typeText(QWindow *window, const char *text)
+inline void typeText(QWindow *window, const char *text)
 {
     for (const char *c = text; *c; ++c)
         QTest::keyClick(window, *c);
 }
 
-const char *IdentityDP = "Acme Displays Slate 24 SN000001";
-const char *IdentityHDMI = "Orbit Electronics Vision 32 SN000002";
+inline const char *IdentityDP = "Acme Displays Slate 24 SN000001";
+inline const char *IdentityHDMI = "Orbit Electronics Vision 32 SN000002";
 
 // A desktop in a temp directory: a fake hyprctl that serves JSON fixtures and
 // logs what it is asked to eval, a fake layout command, desktop entries, and
@@ -79,12 +79,19 @@ struct Fixture {
               "case \"$1\" in\n"
               "  -j) case \"$2\" in\n"
               "        monitors) cat \"$D/monitors.json\" ;;\n"
+              "        activewindow) cat \"$D/active.json\" ;;\n"
               "        workspaces) cat \"$D/workspaces.json\" ;;\n"
               "        clients) cat \"$D/clients.json\" ;;\n"
               "        getoption) echo '{\"int\":0}' ;;\n"
               "      esac ;;\n"
               "  eval) echo \"$2\" >> \"$D/eval.log\"\n"
-              "        case \"$2\" in *failme*) echo \"error: refused\" ;; *) echo ok ;; esac ;;\n"
+              "        case \"$2\" in\n"
+              "          *failme*) echo \"error: refused\" ;;\n"
+              "          hl.dsp.*) echo ok ;; # the real eval builds a dispatcher and does not run it\n"
+              "          *) echo ok ;;\n"
+              "        esac ;;\n"
+              "  dispatch) echo \"$2\" >> \"$D/dispatch.log\"\n"
+              "        case \"$2\" in *address:0xgone*) echo \"warning: window not found\" ;; *) echo ok ;; esac ;;\n"
               "esac\n",
               true);
         write(layouts,
@@ -93,6 +100,7 @@ struct Fixture {
               "awk -v w=\"$1\" '$1==w {print $2; f=1} END {if (!f) print \"dwindle\"}' \"$D/layouts.txt\"\n",
               true);
         write(tools + "/layouts.txt", "12 floating\n1 scrolling\n");
+        write(tools + "/active.json", "{\"address\":\"0xprev\"}");
 
         setMonitors(true, true);
         write(tools + "/workspaces.json", "[\n"
@@ -145,9 +153,10 @@ struct Fixture {
     Catalog catalog() const { return Catalog({apps}); }
     SceneStore store() const { return SceneStore(scenes); }
     QStringList evals() const { return QString::fromUtf8(read(evalLog)).split('\n', Qt::SkipEmptyParts); }
+    QStringList dispatches() const { return QString::fromUtf8(read(tools + "/dispatch.log")).split('\n', Qt::SkipEmptyParts); }
 };
 
-Scene sampleScene(const QString &name = "Coding")
+inline Scene sampleScene(const QString &name = "Coding")
 {
     Scene scene;
     scene.name = name;
@@ -164,9 +173,9 @@ Scene sampleScene(const QString &name = "Coding")
 }
 
 // QML warnings are test failures: the real Main.qml is loaded below.
-QStringList g_warnings;
-QtMessageHandler g_previous = nullptr;
-void collectWarnings(QtMsgType type, const QMessageLogContext &context, const QString &message)
+inline QStringList g_warnings;
+inline QtMessageHandler g_previous = nullptr;
+inline void collectWarnings(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
     if (type == QtWarningMsg || type == QtCriticalMsg)
         g_warnings << message;
@@ -174,7 +183,9 @@ void collectWarnings(QtMsgType type, const QMessageLogContext &context, const QS
         g_previous(type, context, message);
 }
 
-} // namespace
+} // namespace support
+
+using namespace support;
 
 class ScenesTests : public QObject {
     Q_OBJECT
@@ -306,6 +317,8 @@ private slots:
         QCOMPARE(catalog.idForClass("org.gnome.Nautilus"), QString("org.gnome.Nautilus"));
         QCOMPARE(catalog.idForClass("nautilus"), QString("org.gnome.Nautilus")); // last component of the id
         QCOMPARE(catalog.idForClass("mystery"), QString());
+        // Terminal apps run through omarchy-launch-tui have a window class named after the command.
+        QCOMPARE(catalog.idForClass("org.omarchy.btop"), QString("btop"));
         QVERIFY(!catalog.contains("hidden"));
         QCOMPARE(catalog.entry("firefox").name, QString("Firefox"));
     }
@@ -493,7 +506,7 @@ private slots:
         const Catalog catalog = f.catalog();
         Plan plan;
         plan.launches = {{"firefox", "Firefox", 12, "x"}, {"failme", "Failme", 13, "x"}, {"org.gnome.Nautilus", "Files", 1, "x"}};
-        Restorer restorer(plan, catalog, f.hyprctl);
+        Restorer restorer(plan, catalog, f.hyprctl, f.dir.filePath("none.sock"));
         QSignalSpy progress(&restorer, &Restorer::progress), finished(&restorer, &Restorer::finished);
         restorer.start();
         QVERIFY(finished.isEmpty()); // async: nothing happened yet
@@ -513,7 +526,7 @@ private slots:
         const Catalog catalog = f.catalog();
         Plan plan;
         plan.launches = {{"firefox", "Firefox", 12, "x"}};
-        Restorer restorer(plan, catalog, f.dir.filePath("no-such-hyprctl"));
+        Restorer restorer(plan, catalog, f.dir.filePath("no-such-hyprctl"), f.dir.filePath("none.sock"));
         QSignalSpy finished(&restorer, &Restorer::finished);
         restorer.start();
         QTRY_COMPARE(finished.count(), 1);
@@ -567,6 +580,204 @@ private slots:
         QVERIFY(!HyprEvents::relevant("activewindow"));
     }
 
+private:
+    // --- Placing windows ---------------------------------------------------
+
+    // A fake Hyprland event socket, and the connection a Restorer makes to it.
+    struct EventSocket {
+        QTemporaryDir dir{QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation) + "/scenes-test-XXXXXX"};
+        QLocalServer server;
+        QString path;
+        QLocalSocket *client = nullptr;
+        EventSocket()
+        {
+            path = dir.filePath("s.sock");
+            server.listen(path);
+        }
+        void accept()
+        {
+            QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), 3000);
+            client = server.nextPendingConnection();
+        }
+        void send(const QByteArray &line)
+        {
+            client->write(line + "\n");
+            client->flush();
+        }
+    };
+
+    // The event a window opening sends, and Hyprland's answer for what has focus.
+    static void opens(EventSocket &events, Fixture &f, const char *address, const char *workspace, const char *windowClass,
+                      bool takesFocus = true)
+    {
+        if (takesFocus)
+            write(f.tools + "/active.json", QByteArray("{\"address\":\"0x") + address + "\"}");
+        events.send(QByteArray("openwindow>>") + address + "," + workspace + "," + windowClass + ",A title, with a comma");
+    }
+
+private slots:
+    void restorerMovesAWindowThatOpenedOnTheWrongWorkspace()
+    {
+        Fixture f;
+        const Catalog catalog = f.catalog();
+        EventSocket events;
+        Plan plan;
+        plan.launches = {{"firefox", "Firefox", 12, "x"}};
+        Restorer restorer(plan, catalog, f.hyprctl, events.path);
+        events.accept();
+        QSignalSpy finished(&restorer, &Restorer::finished);
+        // The app ignored the workspace rule and opened on workspace 1, taking focus.
+        connect(&restorer, &Restorer::progress, this, [&] { opens(events, f, "aaa111", "1", "firefox"); });
+        restorer.start();
+        QTRY_COMPARE(finished.count(), 1);
+        QVERIFY(restorer.verified());
+        QCOMPARE(restorer.launched(), 1);
+        QVERIFY2(restorer.failures().isEmpty(), qPrintable(restorer.failures().join(";")));
+        QCOMPARE(f.evals().size(), 1); // the launch
+        QVERIFY(f.evals()[0].contains("gtk-launch"));
+        // The move and the focus run through dispatch: eval would not run them.
+        const QStringList dispatches = f.dispatches();
+        QVERIFY2(dispatches.size() == 2, qPrintable(dispatches.join("\n")));
+        QCOMPARE(dispatches[0], Restorer::moveExpression("0xaaa111", 12));
+        QVERIFY(dispatches[0].contains("follow=false"));
+        // Focus was on the window just opened, so it goes back to what had it.
+        QCOMPARE(dispatches[1], Restorer::focusExpression("0xprev"));
+    }
+
+    void restorerReportsAMoveHyprlandRefuses()
+    {
+        Fixture f;
+        const Catalog catalog = f.catalog();
+        EventSocket events;
+        Plan plan;
+        plan.launches = {{"firefox", "Firefox", 12, "x"}};
+        Restorer restorer(plan, catalog, f.hyprctl, events.path);
+        events.accept();
+        QSignalSpy finished(&restorer, &Restorer::finished);
+        // The window is gone again by the time it is moved.
+        connect(&restorer, &Restorer::progress, this, [&] { opens(events, f, "gone", "1", "firefox", false); });
+        restorer.start();
+        QTRY_COMPARE(finished.count(), 1);
+        QCOMPARE(restorer.launched(), 0);
+        QCOMPARE(restorer.failures().size(), 1);
+        QVERIFY2(restorer.failures()[0].contains("could not be moved to workspace 12"), qPrintable(restorer.failures()[0]));
+    }
+
+    void restorerLeavesAWindowThatAlreadyOpenedInPlace()
+    {
+        Fixture f;
+        const Catalog catalog = f.catalog();
+        EventSocket events;
+        Plan plan;
+        plan.launches = {{"firefox", "Firefox", 12, "x"}};
+        Restorer restorer(plan, catalog, f.hyprctl, events.path);
+        events.accept();
+        QSignalSpy finished(&restorer, &Restorer::finished);
+        connect(&restorer, &Restorer::progress, this, [&] { opens(events, f, "bbb222", "12", "firefox", false); });
+        restorer.start();
+        QTRY_COMPARE(finished.count(), 1);
+        QCOMPARE(restorer.launched(), 1);
+        QCOMPARE(f.evals().size(), 1);
+        QVERIFY(f.dispatches().isEmpty()); // nothing to move, and focus never left
+    }
+
+    void restorerDoesNotStealFocusBackFromTheUser()
+    {
+        Fixture f;
+        const Catalog catalog = f.catalog();
+        EventSocket events;
+        Plan plan;
+        plan.launches = {{"firefox", "Firefox", 12, "x"}};
+        Restorer restorer(plan, catalog, f.hyprctl, events.path);
+        events.accept();
+        QSignalSpy finished(&restorer, &Restorer::finished);
+        // The window opens elsewhere, and focus is on something else by the end.
+        connect(&restorer, &Restorer::progress, this, [&] { opens(events, f, "ccc333", "1", "firefox", false); });
+        restorer.start();
+        QTRY_COMPARE(finished.count(), 1);
+        QCOMPARE(f.dispatches().size(), 1); // the move, and no refocus
+    }
+
+    void restorerFailsLoudlyWhenNoWindowAppears()
+    {
+        Fixture f;
+        const Catalog catalog = f.catalog();
+        EventSocket events;
+        Plan plan;
+        plan.launches = {{"firefox", "Firefox", 12, "x"}};
+        Restorer restorer(plan, catalog, f.hyprctl, events.path);
+        restorer.setWindowTimeout(300);
+        events.accept();
+        QSignalSpy finished(&restorer, &Restorer::finished);
+        restorer.start();
+        QTRY_COMPARE(finished.count(), 1);
+        QCOMPARE(restorer.launched(), 0);
+        QCOMPARE(restorer.failures(), (QStringList{"Firefox: no window appeared"}));
+    }
+
+    void restorerNeverMovesAWindowOfAnotherApp()
+    {
+        Fixture f;
+        const Catalog catalog = f.catalog();
+        EventSocket events;
+        Plan plan;
+        plan.launches = {{"firefox", "Firefox", 12, "x"}};
+        Restorer restorer(plan, catalog, f.hyprctl, events.path);
+        restorer.setWindowTimeout(300);
+        events.accept();
+        QSignalSpy finished(&restorer, &Restorer::finished);
+        // Something else opens meanwhile (a Files window, a class nobody launched).
+        connect(&restorer, &Restorer::progress, this, [&] {
+            opens(events, f, "ddd444", "1", "org.gnome.Nautilus", false);
+            opens(events, f, "eee555", "1", "mystery", false);
+        });
+        restorer.start();
+        QTRY_COMPARE(finished.count(), 1);
+        QCOMPARE(restorer.failures().size(), 1);
+        QVERIFY(f.dispatches().isEmpty());
+        for (const auto &line : f.evals())
+            QVERIFY2(!line.contains("ddd444") && !line.contains("eee555"), qPrintable(line));
+    }
+
+    void restorerPlacesEachOfSeveralLaunchesInOrder()
+    {
+        Fixture f;
+        const Catalog catalog = f.catalog();
+        EventSocket events;
+        Plan plan;
+        plan.launches = {{"firefox", "Firefox", 12, "x"}, {"org.gnome.Nautilus", "Files", 13, "x"}, {"firefox", "Firefox", 12, "x"}};
+        Restorer restorer(plan, catalog, f.hyprctl, events.path);
+        events.accept();
+        QSignalSpy finished(&restorer, &Restorer::finished);
+        int count = 0;
+        const char *addresses[] = {"a1", "a2", "a3"}, *classes[] = {"firefox", "org.gnome.Nautilus", "firefox"};
+        connect(&restorer, &Restorer::progress, this, [&](int index) { opens(events, f, addresses[index], "1", classes[index], false); ++count; });
+        restorer.start();
+        QTRY_COMPARE(finished.count(), 1);
+        QCOMPARE(count, 3);
+        QCOMPARE(restorer.launched(), 3);
+        QVERIFY(restorer.failures().isEmpty());
+        QStringList moves;
+        for (const auto &line : f.dispatches())
+            if (line.contains("window.move"))
+                moves << line;
+        QCOMPARE(moves, (QStringList{Restorer::moveExpression("0xa1", 12), Restorer::moveExpression("0xa2", 13),
+                                     Restorer::moveExpression("0xa3", 12)}));
+    }
+
+    void eventsReportEachOpenedWindow()
+    {
+        EventSocket events;
+        HyprEvents hyprEvents(events.path);
+        events.accept();
+        QSignalSpy opened(&hyprEvents, &HyprEvents::windowOpened);
+        events.send("openwindow>>80a1b2,3,firefox,Title, with, commas");
+        QTRY_COMPARE(opened.count(), 1);
+        QCOMPARE(opened[0][0].toString(), QString("0x80a1b2"));
+        QCOMPARE(opened[0][1].toString(), QString("3"));
+        QCOMPARE(opened[0][2].toString(), QString("firefox"));
+    }
+
     // --- CLI ---------------------------------------------------------------
 
 private:
@@ -575,7 +786,7 @@ private:
     {
         CliRun run;
         QTextStream out(&run.out), err(&run.err);
-        CliContext context{f.store(), f.hypr(), &catalog, f.hyprctl, f.dir.filePath("skill")};
+        CliContext context{f.store(), f.hypr(), &catalog, f.hyprctl, f.dir.filePath("none.sock"), 10000, f.dir.filePath("skill")};
         run.code = Cli::run(args, context, out, err);
         out.flush();
         err.flush();
@@ -682,6 +893,7 @@ private slots:
         Fixture f;
         const Catalog catalog = f.catalog();
         Backend backend(f.store(), f.hypr(), catalog, nullptr, f.hyprctl);
+        backend.setEventSocket(f.dir.filePath("none.sock"));
         QTRY_VERIFY(backend.view().value("monitors").toList().size() == 2);
         QVERIFY(backend.view().value("current").toBool());
 
@@ -722,6 +934,7 @@ private slots:
         f.setMonitors(false, true);
         const Catalog catalog = f.catalog();
         Backend backend(f.store(), f.hypr(), catalog, nullptr, f.hyprctl);
+        backend.setEventSocket(f.dir.filePath("none.sock"));
         QTRY_VERIFY(backend.view().value("monitors").toList().size() == 1);
         backend.select("coding");
         const auto monitors = backend.view().value("monitors").toList();
@@ -738,6 +951,7 @@ private slots:
         QVERIFY(f.store().save(sampleScene("Beta"), &error));
         const Catalog catalog = f.catalog();
         Backend backend(f.store(), f.hypr(), catalog, nullptr, f.hyprctl);
+        backend.setEventSocket(f.dir.filePath("none.sock"));
         QCOMPARE(backend.selected(), QString());
         backend.selectOffset(1);
         QCOMPARE(backend.selected(), QString("alpha"));
@@ -758,6 +972,7 @@ private slots:
         write(f.tools + "/layouts.txt", "11 scrolling\n12 floating\n1 scrolling\n");
         const Catalog catalog = f.catalog();
         Backend backend(f.store(), f.hypr(), catalog, nullptr, f.hyprctl);
+        backend.setEventSocket(f.dir.filePath("none.sock"));
         backend.select("coding");
 
         QSignalSpy finished(&backend, &Backend::restoringChanged);
@@ -768,6 +983,7 @@ private slots:
         const QVariantMap result = backend.result();
         QCOMPARE(result.value("scene").toString(), QString("coding"));
         QCOMPARE(result.value("launched").toInt(), 1);
+        QVERIFY(result.value("unverified").toBool()); // no event socket: launches are all it can confirm
         QCOMPARE(result.value("alreadyRunning").toInt(), 4);
         QCOMPARE(result.value("missing").toStringList(), (QStringList{"gone.app"}));
         QCOMPARE(result.value("layouts").toList().size(), 1); // reported, never applied
@@ -785,6 +1001,7 @@ private slots:
         f.setMonitors(false, true);
         const Catalog catalog = f.catalog();
         Backend backend(f.store(), f.hypr(), catalog, nullptr, f.hyprctl);
+        backend.setEventSocket(f.dir.filePath("none.sock"));
         backend.select("coding");
         backend.restore();
         QTRY_VERIFY(!backend.restoring());
@@ -802,6 +1019,7 @@ private slots:
         QFile::remove(f.hyprctl);
         const Catalog catalog = f.catalog();
         Backend backend(f.store(), f.hypr(), catalog, nullptr, f.hyprctl);
+        backend.setEventSocket(f.dir.filePath("none.sock"));
         QTRY_VERIFY(!backend.currentError().isEmpty());
         QVERIFY(!backend.saveCurrent("Nope").isEmpty());
     }
@@ -983,6 +1201,7 @@ private slots:
         Translator translator(f.dir.filePath("language"), ":/i18n");
         Theme theme(f.dir.filePath("theme"));
         Backend backend(f.store(), f.hypr(), catalog, nullptr, f.hyprctl);
+        backend.setEventSocket(f.dir.filePath("none.sock"));
         QQmlApplicationEngine engine;
         engine.addImageProvider("appicon", new AppIcons(catalog));
         engine.rootContext()->setContextProperty("translator", &translator);
@@ -1111,6 +1330,7 @@ private slots:
         Theme theme(f.dir.filePath("theme"));
         QVERIFY(theme.light());
         Backend backend(f.store(), f.hypr(), catalog, nullptr, f.hyprctl);
+        backend.setEventSocket(f.dir.filePath("none.sock"));
         QQmlApplicationEngine engine;
         engine.addImageProvider("appicon", new AppIcons(catalog));
         engine.rootContext()->setContextProperty("translator", &translator);

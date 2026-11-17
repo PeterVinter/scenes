@@ -3,6 +3,7 @@
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
+#include <QFileInfo>
 #include <QRegularExpression>
 #include <QStandardPaths>
 #include <QTextStream>
@@ -104,6 +105,13 @@ Catalog::Catalog(const QStringList &directories)
             offer(entry.wmClass, 1, id);
             offer(id, 2, id);
             offer(id.section('.', -1), 3, id);
+            // omarchy-launch-tui names a terminal app's window after its command
+            // (org.omarchy.btop), so that is the class such a window has.
+            if (entry.terminal) {
+                const QStringList words = splitExec(entry.exec);
+                if (!words.isEmpty())
+                    offer("org.omarchy." + QFileInfo(words.first()).fileName(), 2, id);
+            }
             static const QRegularExpression appId(R"(--(?:app-id|class)[= ]([^\s"']+))");
             const auto match = appId.match(entry.exec);
             if (match.hasMatch())

@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 
     if (!window) {
         QTextStream out(stdout), err(stderr);
-        CliContext context{store, Hypr(), &catalog, "hyprctl", {}};
+        CliContext context{store, Hypr(), &catalog, "hyprctl", {}, 10000, {}};
         const int code = Cli::run(args, context, out, err);
         out.flush();
         err.flush();

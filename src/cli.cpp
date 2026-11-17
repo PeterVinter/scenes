@@ -159,8 +159,10 @@ int restore(CliContext &c, const Options &o, QTextStream &out, QTextStream &err)
 
     QStringList failures;
     int launched = 0;
+    bool unverified = false;
     if (!o.dryRun && !plan.launches.isEmpty()) {
-        Restorer restorer(plan, *c.catalog, c.hyprctl);
+        Restorer restorer(plan, *c.catalog, c.hyprctl, c.eventSocket);
+        restorer.setWindowTimeout(c.windowTimeout);
         QEventLoop loop;
         QObject::connect(&restorer, &Restorer::finished, &loop, &QEventLoop::quit);
         if (!o.json)
@@ -172,6 +174,7 @@ int restore(CliContext &c, const Options &o, QTextStream &out, QTextStream &err)
         loop.exec();
         failures = restorer.failures();
         launched = restorer.launched();
+        unverified = !restorer.verified();
     }
 
     if (o.json) {
@@ -180,6 +183,7 @@ int restore(CliContext &c, const Options &o, QTextStream &out, QTextStream &err)
         result["dry_run"] = o.dryRun;
         result["launched"] = launched;
         result["failed"] = strings(failures);
+        result["unverified"] = unverified;
         emitJson(out, result);
     } else if (o.dryRun) {
         for (const auto &line : plan.describe())
@@ -190,6 +194,8 @@ int restore(CliContext &c, const Options &o, QTextStream &out, QTextStream &err)
     }
 
     // Problems always reach stderr, so an agent reading only errors sees them.
+    if (unverified)
+        err << "scenes: warning: Hyprland's event socket is not reachable, so windows could not be confirmed or moved to their workspaces\n";
     for (const auto &failure : failures)
         err << "scenes: failed to start " << failure << "\n";
     for (const auto &monitor : plan.unplaced)

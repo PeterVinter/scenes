@@ -14,6 +14,8 @@ struct CliContext {
     Hypr hypr;
     const Catalog *catalog = nullptr;
     QString hyprctl = "hyprctl";
+    QString eventSocket; // Empty means Hyprland's own.
+    int windowTimeout = 10000;
     QString skillDirectory; // Where `skill install` writes; empty means ~/.claude/skills/scenes.
 };
 

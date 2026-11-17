@@ -172,6 +172,7 @@ int main(int argc, char *argv[])
     app.installTranslator(&translator);
     Theme theme(dir.filePath("theme"));
     Backend backend(store, Hypr(tools_), catalog, nullptr, tools + "/hyprctl");
+    backend.setEventSocket(dir.filePath("none.sock")); // never the real session's
 
     QQmlApplicationEngine engine;
     QObject::connect(&translator, &Translator::changed, &engine, &QQmlEngine::retranslate);
