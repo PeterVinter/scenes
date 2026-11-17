@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
@@ -28,17 +29,18 @@ Item {
     Repeater {
         model: root.monitors
         Rectangle {
+            id: rect
             required property int index
             required property var modelData
-            x: root.offsetX + (modelData.x - root.bounds.x) * root.fit
-            y: root.offsetY + (modelData.y - root.bounds.y) * root.fit
-            width: Math.max(1, modelData.width) * root.fit - 4
-            height: Math.max(1, modelData.height) * root.fit - 4
+            x: root.offsetX + (rect.modelData.x - root.bounds.x) * root.fit
+            y: root.offsetY + (rect.modelData.y - root.bounds.y) * root.fit
+            width: Math.max(1, rect.modelData.width) * root.fit - 4
+            height: Math.max(1, rect.modelData.height) * root.fit - 4
             radius: Math.min(4, theme.radius)
             color: theme.surface
             border.width: 2
-            border.color: modelData.connected ? theme.accent : theme.border
-            opacity: modelData.connected ? 1 : 0.7
+            border.color: rect.modelData.connected ? theme.accent : theme.border
+            opacity: rect.modelData.connected ? 1 : 0.7
 
             Rectangle {
                 id: badge
@@ -47,13 +49,13 @@ Item {
                 width: 22
                 height: 22
                 radius: 11 // A true circle.
-                color: modelData.connected ? theme.accent : theme.selection
+                color: rect.modelData.connected ? theme.accent : theme.selection
                 Label {
                     anchors.centerIn: parent
-                    text: Number(parent.parent.index + 1).toLocaleString(Qt.locale(), "f", 0)
+                    text: Number(rect.index + 1).toLocaleString(Qt.locale(), "f", 0)
                     font.pixelSize: 12
                     font.bold: true
-                    color: modelData.connected ? theme.accentForeground : theme.foreground
+                    color: rect.modelData.connected ? theme.accentForeground : theme.foreground
                 }
             }
             Column {
@@ -64,7 +66,7 @@ Item {
                 anchors.verticalCenter: badge.verticalCenter
                 Label {
                     width: parent.width
-                    text: modelData.label
+                    text: rect.modelData.label
                     font.pixelSize: 12
                     elide: Text.ElideRight
                 }
@@ -74,7 +76,7 @@ Item {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.margins: 8
-                visible: !modelData.connected
+                visible: !rect.modelData.connected
                 text: qsTr("Not connected")
                 font.pixelSize: 12
                 color: theme.secondary

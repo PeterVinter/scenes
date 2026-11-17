@@ -18,6 +18,8 @@ Dialog {
     parent: Overlay.overlay
     anchors.centerIn: parent
     modal: true
+    // Material's own dim lightens a dark window; always darken what is behind.
+    Overlay.modal: Rectangle { color: Qt.rgba(0, 0, 0, theme.light ? 0.3 : 0.55) }
     focus: true
     width: Math.min(420, (parent ? parent.width : 420) - 32)
     title: qsTr("Delete scene?")
@@ -25,14 +27,18 @@ Dialog {
     onOpened: cancel.forceActiveFocus()
 
     contentItem: Label {
+        // qmllint disable missing-property
         LayoutMirroring.enabled: Qt.application.layoutDirection === Qt.RightToLeft
+        // qmllint enable missing-property
         LayoutMirroring.childrenInherit: true
         text: qsTr("“%1” will be deleted. Ctrl+Z brings it back.").arg(dialog.sceneName)
         wrapMode: Text.Wrap
     }
 
     footer: RowLayout {
+        // qmllint disable missing-property
         LayoutMirroring.enabled: Qt.application.layoutDirection === Qt.RightToLeft
+        // qmllint enable missing-property
         LayoutMirroring.childrenInherit: true
         spacing: 8
         Item { Layout.fillWidth: true; Layout.leftMargin: 12 }

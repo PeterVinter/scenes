@@ -64,7 +64,9 @@ ApplicationWindow {
     // application's layout direction.
     Item {
         anchors.fill: parent
+        // qmllint disable missing-property
         LayoutMirroring.enabled: Qt.application.layoutDirection === Qt.RightToLeft
+        // qmllint enable missing-property
         LayoutMirroring.childrenInherit: true
 
         RowLayout {

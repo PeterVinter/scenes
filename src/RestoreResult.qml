@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
@@ -59,9 +60,10 @@ Rectangle {
         Repeater {
             model: box.result.failed !== undefined ? box.result.failed : []
             Label {
+                id: failure
                 required property string modelData
                 Layout.fillWidth: true
-                text: qsTr("Couldn't start %1").arg(modelData)
+                text: qsTr("Couldn't start %1").arg(failure.modelData)
                 wrapMode: Text.Wrap
             }
         }
@@ -69,9 +71,10 @@ Rectangle {
         Repeater {
             model: box.result.unplaced !== undefined ? box.result.unplaced : []
             Label {
+                id: gone
                 required property var modelData
                 Layout.fillWidth: true
-                text: qsTr("%1 isn't connected: its %Ln workspaces were not placed.", "", modelData.workspaces).arg(modelData.label)
+                text: qsTr("%1 isn't connected: its %Ln workspaces were not placed.", "", gone.modelData.workspaces).arg(gone.modelData.label)
                 wrapMode: Text.Wrap
             }
         }
@@ -86,11 +89,12 @@ Rectangle {
         Repeater {
             model: box.result.layouts !== undefined ? box.result.layouts : []
             Label {
+                id: gap
                 required property var modelData
                 Layout.fillWidth: true
                 text: qsTr("Layout not applied on workspace %1: the scene has %2, it is %3.")
-                      .arg(Number(modelData.workspace).toLocaleString(Qt.locale(), "f", 0))
-                      .arg(box.layoutName(modelData.wanted)).arg(box.layoutName(modelData.current))
+                      .arg(Number(gap.modelData.workspace).toLocaleString(Qt.locale(), "f", 0))
+                      .arg(box.layoutName(gap.modelData.wanted)).arg(box.layoutName(gap.modelData.current))
                 color: theme.secondary
                 wrapMode: Text.Wrap
                 font.pixelSize: 12

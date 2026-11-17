@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
@@ -5,6 +6,7 @@ import QtQuick.Layouts
 
 Item {
     id: root
+    clip: true
 
     signal saveRequested
     signal renameRequested
@@ -16,16 +18,41 @@ Item {
     readonly property var result: backend.result.scene !== undefined && backend.result.scene === backend.selected
                                   ? backend.result : ({})
 
-    ColumnLayout {
+    // The whole pane scrolls, so longer words or a short window never push the
+    // workspaces out of reach.
+    Flickable {
+        id: page
         anchors.fill: parent
-        anchors.margins: 20
+        contentWidth: width
+        contentHeight: content.height + 40
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: ScrollBar { policy: page.contentHeight > page.height + 2 ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff }
+
+    ColumnLayout {
+        id: content
+        x: 20
+        y: 20
+        width: page.width - 40
+        height: Math.max(implicitHeight, page.height - 40)
         spacing: 12
 
-        RowLayout {
+        // Title and actions share a row while the title keeps a readable width;
+        // longer words in another language move the actions under it instead.
+        GridLayout {
+            id: header
             Layout.fillWidth: true
-            spacing: 12
+            columnSpacing: 12
+            rowSpacing: 8
+            columns: header.width - header.actionsWidth - header.columnSpacing >= 220 ? 2 : 1
+            // The width the buttons want in one row, whichever of them are shown.
+            readonly property real actionsWidth: (saveButton.visible ? saveButton.implicitWidth : 0)
+                + (restoreButton.visible ? restoreButton.implicitWidth : 0)
+                + (renameButton.visible ? renameButton.implicitWidth : 0)
+                + (deleteButton.visible ? deleteButton.implicitWidth : 0)
 
             ColumnLayout {
+                Layout.minimumWidth: 0
                 Layout.fillWidth: true
                 spacing: 2
                 Label {
@@ -47,39 +74,54 @@ Item {
                 }
             }
 
-            Button {
-                visible: root.current
-                text: qsTr("Save as scene")
-                highlighted: true
-                enabled: root.monitors.length > 0
-                Material.roundedScale: theme.radius
-                Material.background: theme.accent
-                Material.foreground: theme.accentForeground
-                onClicked: root.saveRequested()
-            }
-            Button {
-                visible: !root.current
-                text: qsTr("Restore")
-                highlighted: true
-                enabled: !backend.restoring
-                Material.roundedScale: theme.radius
-                Material.background: theme.accent
-                Material.foreground: theme.accentForeground
-                onClicked: backend.restore()
-            }
-            Button {
-                visible: !root.current
-                text: qsTr("Rename")
-                flat: true
-                Material.roundedScale: theme.radius
-                onClicked: root.renameRequested()
-            }
-            Button {
-                visible: !root.current
-                text: qsTr("Delete")
-                flat: true
-                Material.roundedScale: theme.radius
-                onClicked: root.deleteRequested()
+            // A Flow, so the buttons wrap instead of widening the whole pane.
+            Flow {
+                id: actions
+                Layout.alignment: Qt.AlignRight | Qt.AlignTop
+                Layout.fillWidth: header.columns === 1
+                Layout.minimumWidth: 0
+                // A Flow reports a tiny implicit width, so ask for the full row while it shares one.
+                Layout.preferredWidth: header.columns === 2 ? header.actionsWidth + 3 * spacing : -1
+                spacing: 4
+
+                Button {
+                    id: saveButton
+                    visible: root.current
+                    text: qsTr("Save as scene")
+                    highlighted: true
+                    enabled: root.monitors.length > 0
+                    Material.roundedScale: theme.radius
+                    Material.background: theme.accent
+                    Material.foreground: theme.accentForeground
+                    onClicked: root.saveRequested()
+                }
+                Button {
+                    id: restoreButton
+                    visible: !root.current
+                    text: qsTr("Restore")
+                    highlighted: true
+                    enabled: !backend.restoring
+                    Material.roundedScale: theme.radius
+                    Material.background: theme.accent
+                    Material.foreground: theme.accentForeground
+                    onClicked: backend.restore()
+                }
+                Button {
+                    id: renameButton
+                    visible: !root.current
+                    text: qsTr("Rename")
+                    flat: true
+                    Material.roundedScale: theme.radius
+                    onClicked: root.renameRequested()
+                }
+                Button {
+                    id: deleteButton
+                    visible: !root.current
+                    text: qsTr("Delete")
+                    flat: true
+                    Material.roundedScale: theme.radius
+                    onClicked: root.deleteRequested()
+                }
             }
         }
 
@@ -130,32 +172,42 @@ Item {
         MonitorMap {
             Layout.fillWidth: true
             Layout.preferredHeight: 150
+            Layout.minimumHeight: 90
             monitors: root.monitors
         }
 
-        ScrollView {
+        Flickable {
             id: scroll
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            Layout.preferredHeight: panels.implicitHeight + 8
             clip: true
             contentWidth: panels.implicitWidth
             contentHeight: panels.implicitHeight
+            boundsBehavior: Flickable.StopAtBounds
+            ScrollBar.horizontal: ScrollBar { }
 
             Row {
                 id: panels
                 spacing: 12
+                // Monitors keep their physical order, matching the map above, in
+                // either text direction; each panel mirrors its own contents.
+                LayoutMirroring.enabled: false
+                LayoutMirroring.childrenInherit: false
                 Repeater {
                     model: root.monitors
                     MonitorPanel {
+                        id: panel
                         required property int index
                         required property var modelData
                         height: implicitHeight
-                        number: index + 1
-                        monitor: modelData
+                        number: panel.index + 1
+                        monitor: panel.modelData
                     }
                 }
             }
         }
+
+        Item { Layout.fillHeight: true }
 
         // What the view leaves out, and what restore can't do.
         Label {
@@ -184,5 +236,5 @@ Item {
             wrapMode: Text.Wrap
             font.pixelSize: 12
         }
-    }
+    }    }
 }

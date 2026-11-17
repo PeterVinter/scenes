@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
@@ -11,6 +12,11 @@ ColumnLayout {
 
     width: 250
     spacing: 8
+
+    // qmllint disable missing-property
+    LayoutMirroring.enabled: Qt.application.layoutDirection === Qt.RightToLeft
+    // qmllint enable missing-property
+    LayoutMirroring.childrenInherit: true
 
     RowLayout {
         Layout.fillWidth: true
@@ -48,9 +54,10 @@ ColumnLayout {
     Repeater {
         model: panel.monitor.workspaces
         WorkspaceCard {
+            id: card
             required property var modelData
             Layout.fillWidth: true
-            workspace: modelData
+            workspace: card.modelData
             dimmed: !panel.monitor.connected
         }
     }

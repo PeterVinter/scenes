@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
@@ -22,13 +23,17 @@ Popup {
     parent: Overlay.overlay
     anchors.centerIn: parent
     modal: true
+    // Material's own dim lightens a dark window; always darken what is behind.
+    Overlay.modal: Rectangle { color: Qt.rgba(0, 0, 0, theme.light ? 0.3 : 0.55) }
     focus: true
     width: Math.min(520, (parent ? parent.width : 520) - 32)
     padding: 20
     Material.roundedScale: theme.radius
 
     contentItem: ColumnLayout {
+        // qmllint disable missing-property
         LayoutMirroring.enabled: Qt.application.layoutDirection === Qt.RightToLeft
+        // qmllint enable missing-property
         LayoutMirroring.childrenInherit: true
         spacing: 10
 
@@ -43,6 +48,7 @@ Popup {
         Repeater {
             model: overlay.keys
             RowLayout {
+                id: entry
                 required property var modelData
                 Layout.fillWidth: true
                 spacing: 12
@@ -54,14 +60,14 @@ Popup {
                     border.color: theme.border
                     Label {
                         anchors.centerIn: parent
-                        text: modelData.key
+                        text: entry.modelData.key
                         font.pixelSize: 12
                         font.bold: true
                     }
                 }
                 Label {
                     Layout.fillWidth: true
-                    text: modelData.action
+                    text: entry.modelData.action
                     wrapMode: Text.Wrap
                 }
             }

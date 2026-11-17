@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
@@ -32,14 +33,17 @@ Rectangle {
             Layout.fillWidth: true
             Label {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 text: qsTr("Workspace %1").arg(Number(card.workspace.slot).toLocaleString(Qt.locale(), "f", 0))
                 font.bold: true
                 elide: Text.ElideRight
             }
             Label {
+                Layout.maximumWidth: Math.max(60, card.width * 0.4)
                 text: card.layoutName(card.workspace.layout)
                 color: theme.secondary
                 font.pixelSize: 12
+                elide: Text.ElideRight
             }
         }
 
@@ -49,16 +53,17 @@ Rectangle {
             Repeater {
                 model: card.workspace.apps
                 Image {
+                    id: icon
                     required property var modelData
                     width: 28
                     height: 28
-                    source: "image://appicon/" + modelData.id
+                    source: "image://appicon/" + icon.modelData.id
                     sourceSize: Qt.size(56, 56)
                     fillMode: Image.PreserveAspectFit
-                    opacity: modelData.installed ? 1 : 0.4
+                    opacity: icon.modelData.installed ? 1 : 0.4
                     HoverHandler { id: iconHover }
                     ToolTip.visible: iconHover.hovered
-                    ToolTip.text: modelData.installed ? modelData.name : qsTr("%1 (not installed)").arg(modelData.name)
+                    ToolTip.text: icon.modelData.installed ? icon.modelData.name : qsTr("%1 (not installed)").arg(icon.modelData.name)
                 }
             }
         }

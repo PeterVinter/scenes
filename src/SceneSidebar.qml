@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
@@ -47,14 +48,15 @@ Rectangle {
             visible: count > 0
             boundsBehavior: Flickable.StopAtBounds
             delegate: SceneRow {
+                id: sceneRow
                 required property var modelData
                 width: ListView.view.width
-                title: modelData.name
+                title: sceneRow.modelData.name
                 // Reading translator.language makes the plural forms re-render on a language switch.
-                subtitle: translator.language !== "" ? qsTr("%1, %2").arg(qsTr("%Ln apps", "", modelData.apps))
-                                                          .arg(qsTr("%Ln workspaces", "", modelData.workspaces)) : ""
-                selected: backend.selected === modelData.slug
-                onClicked: backend.select(modelData.slug)
+                subtitle: translator.language !== "" ? qsTr("%1, %2").arg(qsTr("%Ln apps", "", sceneRow.modelData.apps))
+                                                          .arg(qsTr("%Ln workspaces", "", sceneRow.modelData.workspaces)) : ""
+                selected: backend.selected === sceneRow.modelData.slug
+                onClicked: backend.select(sceneRow.modelData.slug)
             }
         }
 
