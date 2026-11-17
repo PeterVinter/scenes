@@ -2,6 +2,8 @@
 Type=Application
 Name=Scenes
 Name[sv]=Scener
+GenericName=Desktop Setup Manager
+GenericName[sv]=Skrivbordsuppsättningar
 Comment=Save and restore named setups of the desktop
 Comment[sv]=Spara och återställ namngivna skrivbordsuppsättningar
 Exec=scenes open
