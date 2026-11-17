@@ -92,9 +92,7 @@
   "What is a scene?": "Vad är en scen?",
   "A scene is a named setup of your desktop. For every monitor and workspace it keeps the apps that are open and where floating windows sat. Think Coding, Meeting or Writing.": "En scen är en namngiven uppsättning av ditt skrivbord. För varje skärm och arbetsyta sparar den vilka appar som är öppna och var flytande fönster satt. Tänk Kodning, Möte eller Skrivande.",
   "Save a scene": "Spara en scen",
-  "Arrange your desktop the way you want it and press N. Give it a name and it is saved. Current desktop, at the top of the list, always shows what is open right now.": "Ordna skrivbordet som du vill ha det och tryck på N. Ge scenen ett namn så sparas den. Nuvarande skrivbord, högst upp i listan, visar alltid det som är öppet just nu.",
   "Restore a scene": "Återställ en scen",
-  "Select a scene and press Space. Scenes opens the apps that are missing, each on its own workspace, and puts floating windows back. It never closes or moves a window that is already open.": "Välj en scen och tryck på blanksteg. Scener öppnar de appar som saknas, var och en på sin arbetsyta, och sätter tillbaka flytande fönster. Den stänger eller flyttar aldrig ett fönster som redan är öppet.",
   "Monitors": "Skärmar",
   "A scene is tied to your physical monitors (make, model and serial), not to their connector names. A monitor that isn't connected is drawn dimmed, and its workspaces are not restored. They are never moved to another monitor.": "En scen är knuten till dina fysiska skärmar (märke, modell och serienummer), inte till deras anslutningsnamn. En skärm som inte är ansluten visas dämpad, och dess arbetsytor återställs inte. De flyttas aldrig till en annan skärm.",
   "What Scenes can't do": "Vad Scener inte kan",
@@ -105,5 +103,7 @@
   "Save and restore named setups of your Omarchy desktop.": "Spara och återställ namngivna uppsättningar av ditt Omarchy-skrivbord.",
   "Your scenes are kept in %1": "Dina scener sparas i %1",
   "Released under the MIT License.": "Utgiven under MIT-licensen.",
-  "Made by %1": "Skapad av %1"
+  "Made by %1": "Skapad av %1",
+  "Arrange your desktop the way you want it and press N. The whole desktop is saved at once: every monitor and every workspace with its apps, not only the one you are looking at. Give it a name and it is saved. Current desktop, at the top of the list, always shows what is open right now.": "Ordna skrivbordet som du vill ha det och tryck på N. Hela skrivbordet sparas på en gång: alla skärmar och alla arbetsytor med sina appar, inte bara den du tittar på. Ge scenen ett namn så sparas den. Nuvarande skrivbord, högst upp i listan, visar alltid det som är öppet just nu.",
+  "Select a scene and press Space. The whole scene is restored at once, on every monitor and workspace: Scenes opens the apps that are missing, each on its own workspace, and puts floating windows back. It never closes or moves a window that is already open.": "Välj en scen och tryck på blanksteg. Hela scenen återställs på en gång, på alla skärmar och arbetsytor: Scener öppnar de appar som saknas, var och en på sin arbetsyta, och sätter tillbaka flytande fönster. Den stänger eller flyttar aldrig ett fönster som redan är öppet."
 }

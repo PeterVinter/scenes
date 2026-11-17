@@ -15,6 +15,11 @@ rounding) and the language picked under Setup > Language.
 
 Arrange your desktop, open Scenes (`Super + Space`), and press `N`.
 
+**A scene is the whole desktop, saved at once**: every monitor and every
+workspace with its apps, not only the workspace you are looking at. You can't
+save a single workspace or monitor on its own. Restoring works the same way: it
+restores the whole scene, on every monitor, in one go.
+
 | Key | Action |
 |---|---|
 | `Space` | Restore the selected scene |
