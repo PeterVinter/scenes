@@ -4,7 +4,9 @@
 set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-PREFIX="${PREFIX:-$HOME/.local}" "$ROOT/bin/build"
+PREFIX="${PREFIX:-$HOME/.local}"
+export PREFIX
+"$ROOT/bin/build"
 make -C "$ROOT/build" install
 command -v update-desktop-database >/dev/null && update-desktop-database "$PREFIX/share/applications" 2>/dev/null || true
 echo "Installed to $PREFIX"
