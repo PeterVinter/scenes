@@ -4,7 +4,7 @@
 //
 //   scenes_screenshot --state list --theme dark --lang sv --out /path/shot.png
 //
-// States: empty, list, result, missing, dialog, delete, overlay.
+// States: empty, list, result, missing, dialog, delete, overlay, help, about.
 // Languages: en, sv, or "long" (pseudo-Danish, 1.5x longer) and "rtl" (Arabic script).
 #include <QDir>
 #include <QFile>
@@ -55,6 +55,7 @@ int main(int argc, char *argv[])
     if (qEnvironmentVariableIsEmpty("QT_QUICK_BACKEND"))
         qputenv("QT_QUICK_BACKEND", "rhi");
     QGuiApplication app(argc, argv);
+    app.setApplicationVersion("0.1.0");
     QString thenTheme, state = "list", themeName = "dark", lang = "en", out = "shot.png";
     int width = 1040, height = 800;
     const QStringList args = app.arguments();
@@ -188,7 +189,7 @@ int main(int argc, char *argv[])
     window->show();
     wait(700);
 
-    if (state == "list" || state == "dialog" || state == "delete" || state == "overlay")
+    if (state == "list" || state == "dialog" || state == "delete" || state == "overlay" || state == "help" || state == "about")
         backend.select("coding");
     if (state == "missing")
         backend.select("travel");
@@ -205,6 +206,10 @@ int main(int argc, char *argv[])
         QMetaObject::invokeMethod(window->findChild<QObject *>("deleteDialog"), "openFor", Q_ARG(QVariant, "Coding"));
     if (state == "overlay")
         QMetaObject::invokeMethod(window->findChild<QObject *>("helpOverlay"), "open");
+    if (state == "help")
+        QMetaObject::invokeMethod(window->findChild<QObject *>("helpDialog"), "openTab", Q_ARG(QVariant, 0));
+    if (state == "about")
+        QMetaObject::invokeMethod(window->findChild<QObject *>("helpDialog"), "openTab", Q_ARG(QVariant, 1));
     wait(500);
 
     // --then <dark|light>: switch the theme while the window is open, the way

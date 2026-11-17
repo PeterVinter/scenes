@@ -11,6 +11,7 @@
         <file alias="SceneNameDialog.qml">SceneNameDialog.qml</file>
         <file alias="ConfirmDeleteDialog.qml">ConfirmDeleteDialog.qml</file>
         <file alias="ShortcutHelp.qml">ShortcutHelp.qml</file>
+        <file alias="HelpDialog.qml">HelpDialog.qml</file>
         <file alias="skill/SKILL.md">skill/SKILL.md</file>
         <file alias="i18n/en.json">i18n/en.json</file>
         <file alias="i18n/sv.json">i18n/sv.json</file>

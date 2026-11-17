@@ -16,7 +16,8 @@ Popup {
         { key: "↑ ↓", action: qsTr("Select the previous or next scene") },
         { key: "Ctrl+Z", action: qsTr("Undo a delete or rename") },
         { key: "Ctrl+Shift+Z", action: qsTr("Redo") },
-        { key: "?", action: qsTr("Show or hide this help") },
+        { key: "F1", action: qsTr("Open the help") },
+        { key: "?", action: qsTr("Show or hide this list of shortcuts") },
         { key: "Q", action: qsTr("Quit") }
     ]
 

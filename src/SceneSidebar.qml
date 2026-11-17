@@ -8,6 +8,9 @@ Rectangle {
     id: root
     color: theme.surface
 
+    signal helpRequested
+    signal aboutRequested
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
@@ -96,12 +99,33 @@ Rectangle {
 
         Label {
             Layout.fillWidth: true
-            Layout.margins: 16
+            Layout.leftMargin: 16
+            Layout.rightMargin: 16
             Layout.topMargin: 8
             text: qsTr("Press ? for shortcuts")
             color: theme.secondary
             font.pixelSize: 12
             elide: Text.ElideRight
+        }
+
+        Flow {
+            Layout.fillWidth: true
+            Layout.leftMargin: 8
+            Layout.rightMargin: 8
+            Layout.bottomMargin: 8
+            spacing: 0
+            Button {
+                text: qsTr("Help")
+                flat: true
+                Material.roundedScale: theme.radius
+                onClicked: root.helpRequested()
+            }
+            Button {
+                text: qsTr("About")
+                flat: true
+                Material.roundedScale: theme.radius
+                onClicked: root.aboutRequested()
+            }
         }
     }
 }

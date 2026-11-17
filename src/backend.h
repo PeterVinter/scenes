@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QCoreApplication>
 #include <QFutureWatcher>
 #include <QObject>
 #include <QTimer>
@@ -35,6 +36,8 @@ class Backend : public QObject {
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY historyChanged)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY historyChanged)
     Q_PROPERTY(bool eventsConnected READ eventsConnected NOTIFY eventsConnectedChanged)
+    Q_PROPERTY(QString version READ version CONSTANT)
+    Q_PROPERTY(QString sceneDirectory READ sceneDirectory CONSTANT)
 
 public:
     Backend(const SceneStore &store, const Hypr &hypr, const Catalog &catalog, HyprEvents *events = nullptr,
@@ -54,6 +57,8 @@ public:
     bool canUndo() const { return !m_undo.isEmpty(); }
     bool canRedo() const { return !m_redo.isEmpty(); }
     bool eventsConnected() const { return m_events && m_events->connected(); }
+    QString version() const { return QCoreApplication::applicationVersion(); }
+    QString sceneDirectory() const { return m_store.directory(); }
 
     Q_INVOKABLE void select(const QString &slug);
     Q_INVOKABLE void selectOffset(int delta);

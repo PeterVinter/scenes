@@ -1568,6 +1568,22 @@ private slots:
         QTest::keyClick(window, Qt::Key_Z, Qt::ControlModifier);
         QTRY_VERIFY(f.store().exists("coding"));
 
+        // F1 opens the help (Escape closes it), and single keys are off while it is open.
+        auto *helpDialog = window->findChild<QObject *>("helpDialog");
+        QVERIFY(helpDialog);
+        QTest::keyClick(window, Qt::Key_F1);
+        QTRY_VERIFY(visible(helpDialog));
+        QTest::keyClick(window, Qt::Key_N);
+        QVERIFY(!visible(nameDialog));
+        QTest::keyClick(window, Qt::Key_Q);
+        QVERIFY(window->isVisible());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!visible(helpDialog));
+        QMetaObject::invokeMethod(helpDialog, "openTab", Q_ARG(QVariant, QVariant(1))); // About
+        QTRY_VERIFY(visible(helpDialog));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!visible(helpDialog));
+
         // ? shows the shortcuts and Escape hides them; Q only quits when nothing is open.
         QTest::keyClick(window, Qt::Key_Question, Qt::ShiftModifier);
         QTRY_VERIFY(visible(help));

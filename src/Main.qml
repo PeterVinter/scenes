@@ -19,7 +19,7 @@ ApplicationWindow {
     Material.foreground: theme.foreground
     Material.roundedScale: theme.radius
 
-    readonly property bool dialogOpen: nameDialog.visible || deleteDialog.visible
+    readonly property bool dialogOpen: nameDialog.visible || deleteDialog.visible || helpDialog.visible
     // Single-key shortcuts are off whenever something that takes typing or a
     // choice is open, so a "q" in the name field is a letter and not a quit.
     readonly property bool keysEnabled: !dialogOpen && !helpOverlay.visible
@@ -56,6 +56,7 @@ ApplicationWindow {
     Shortcut { sequence: "Down"; enabled: win.keysEnabled; onActivated: backend.selectOffset(1) }
     // "?" is Shift+/ on most keyboards, so both spellings are bound.
     Shortcut { sequences: ["?", "Shift+?"]; enabled: !win.dialogOpen; onActivated: helpOverlay.visible ? helpOverlay.close() : helpOverlay.open() }
+    Shortcut { sequence: "F1"; enabled: !nameDialog.visible && !deleteDialog.visible && !helpOverlay.visible; onActivated: helpDialog.visible ? helpDialog.close() : helpDialog.openTab(0) }
     Shortcut { sequence: "Q"; enabled: win.keysEnabled; onActivated: win.close() }
     Shortcut { sequences: [StandardKey.Undo]; enabled: win.keysEnabled; onActivated: win.flash(backend.undo()) }
     Shortcut { sequences: [StandardKey.Redo]; enabled: win.keysEnabled; onActivated: win.flash(backend.redo()) }
@@ -76,6 +77,8 @@ ApplicationWindow {
             SceneSidebar {
                 Layout.preferredWidth: Math.min(320, Math.max(240, win.width * 0.28))
                 Layout.fillHeight: true
+                onHelpRequested: helpDialog.openTab(0)
+                onAboutRequested: helpDialog.openTab(1)
             }
 
             Rectangle {
@@ -121,4 +124,5 @@ ApplicationWindow {
     SceneNameDialog { id: nameDialog }
     ConfirmDeleteDialog { id: deleteDialog }
     ShortcutHelp { id: helpOverlay }
+    HelpDialog { id: helpDialog }
 }

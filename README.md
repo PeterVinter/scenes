@@ -23,10 +23,12 @@ Arrange your desktop, open Scenes (`Super + Space`), and press `N`.
 | `Delete` | Delete the selected scene (asks first) |
 | `Up` / `Down` | Select the previous or next scene; the first entry is the live **Current desktop** |
 | `Ctrl+Z` / `Ctrl+Shift+Z` | Undo / redo a delete or rename |
+| `F1` | Open the help (a short guide, and the About tab) |
 | `?` | Show every shortcut |
 | `Q` | Quit |
 
 Single keys are off while a dialog is open, so typing a name never triggers them.
+The **Help** and **About** buttons in the sidebar open the same dialog as `F1`.
 
 The right pane draws the selected scene as its monitors, in their real
 arrangement, and under them each monitor's workspaces with their layout and app
