@@ -39,6 +39,7 @@ Rectangle {
                 elide: Text.ElideRight
             }
             Label {
+                visible: card.workspace.layout !== ""
                 Layout.maximumWidth: Math.max(60, card.width * 0.4)
                 text: card.layoutName(card.workspace.layout)
                 color: theme.secondary

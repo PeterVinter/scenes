@@ -992,6 +992,41 @@ private slots:
         QVERIFY(monitors[1].toMap().value("connected").toBool());
     }
 
+    // Like Omarchy's bar: slots 1-5 of every monitor are always shown, 6-10 only when used.
+    void viewAlwaysShowsFiveWorkspacesPerMonitor()
+    {
+        Fixture f;
+        QString error;
+        Scene scene = sampleScene("Coding"); // DP-1 uses slots 1 and 2, HDMI slot 1
+        scene.monitors[1].workspaces.append({8, "dwindle", {"firefox"}});
+        QVERIFY(f.store().save(scene, &error));
+        const Catalog catalog = f.catalog();
+        Backend backend(f.store(), f.hypr(), catalog, nullptr, f.hyprctl);
+        backend.setEventSocket(f.dir.filePath("none.sock"));
+        backend.select("coding");
+        const auto monitors = backend.view().value("monitors").toList();
+        QCOMPARE(monitors.size(), 2);
+
+        auto slotNumbers = [](const QVariant &monitor) {
+            QList<int> result;
+            for (const auto &workspace : monitor.toMap().value("workspaces").toList())
+                result << workspace.toMap().value("slot").toInt();
+            return result;
+        };
+        QCOMPARE(slotNumbers(monitors[0]), (QList<int>{1, 2, 3, 4, 5}));
+        QCOMPARE(slotNumbers(monitors[1]), (QList<int>{1, 2, 3, 4, 5, 8}));
+
+        // A filled-in slot is empty and claims no layout; a saved one keeps its own.
+        const auto first = monitors[0].toMap().value("workspaces").toList();
+        QCOMPARE(first[2].toMap().value("layout").toString(), QString());
+        QVERIFY(first[2].toMap().value("apps").toList().isEmpty());
+        QCOMPARE(first[1].toMap().value("layout").toString(), QString("floating"));
+        // The saved scene itself is untouched: nothing was added to it.
+        Scene reloaded;
+        QVERIFY(f.store().load("coding", &reloaded, &error));
+        QCOMPARE(reloaded.workspaceCount(), 4);
+    }
+
     void backendArrowsWalkThePinnedRowThenTheScenes()
     {
         Fixture f;

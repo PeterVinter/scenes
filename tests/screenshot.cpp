@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
         qputenv("QT_QUICK_BACKEND", "rhi");
     QGuiApplication app(argc, argv);
     QString thenTheme, state = "list", themeName = "dark", lang = "en", out = "shot.png";
-    int width = 1040, height = 700;
+    int width = 1040, height = 800;
     const QStringList args = app.arguments();
     for (int i = 1; i + 1 < args.size(); i += 2) {
         if (args[i] == "--state") state = args[i + 1];

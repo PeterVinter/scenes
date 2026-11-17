@@ -30,7 +30,9 @@ Single keys are off while a dialog is open, so typing a name never triggers them
 
 The right pane draws the selected scene as its monitors, in their real
 arrangement, and under them each monitor's workspaces with their layout and app
-icons. A monitor that isn't plugged in right now is drawn dimmed.
+icons. Like Omarchy's bar it always shows workspaces 1-5 of every monitor (an
+unused one reads "Empty" and claims no layout), and 6-10 only when a scene uses
+them. A monitor that isn't plugged in right now is drawn dimmed.
 
 ## Command line
 

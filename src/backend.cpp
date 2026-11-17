@@ -1,6 +1,7 @@
 #include "backend.h"
 
 #include <QtConcurrent>
+#include <algorithm>
 
 Backend::Backend(const SceneStore &store, const Hypr &hypr, const Catalog &catalog, HyprEvents *events,
                  const QString &hyprctl, QObject *parent)
@@ -87,8 +88,21 @@ QVariantMap Backend::viewFor(const Scene &scene, bool current) const
 
     QVariantList monitors;
     for (const auto &monitor : scene.monitors) {
+        // Like Omarchy's bar, show the first five workspaces of every monitor
+        // whether or not they are used, and the others (6-10) only when they are.
+        // An unused one has no layout, so nothing is claimed about it.
+        QList<SceneWorkspace> shown = monitor.workspaces;
+        for (int slot = 1; slot <= 5; ++slot) {
+            bool present = false;
+            for (const auto &workspace : shown)
+                present = present || workspace.slot == slot;
+            if (!present)
+                shown.append({slot, QString(), {}});
+        }
+        std::sort(shown.begin(), shown.end(), [](const SceneWorkspace &a, const SceneWorkspace &b) { return a.slot < b.slot; });
+
         QVariantList workspaces;
-        for (const auto &workspace : monitor.workspaces) {
+        for (const auto &workspace : shown) {
             QVariantList apps;
             for (const auto &id : workspace.apps)
                 apps.append(QVariantMap{{"id", id},
