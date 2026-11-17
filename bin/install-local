@@ -1,0 +1,10 @@
+#!/bin/sh
+# Installs into ~/.local without root, so Scenes shows up in the launcher
+# straight away. bin/install builds the real package instead.
+set -eu
+
+ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+PREFIX="${PREFIX:-$HOME/.local}" "$ROOT/bin/build"
+make -C "$ROOT/build" install
+command -v update-desktop-database >/dev/null && update-desktop-database "$PREFIX/share/applications" 2>/dev/null || true
+echo "Installed to $PREFIX"
