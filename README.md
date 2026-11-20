@@ -1,15 +1,22 @@
-![Scenes showing a scene called Coding on two monitors](docs/screenshot.png)
+<div align="center">
 
 # Scenes
 
-Save and restore named setups of your [Omarchy](https://omarchy.org) desktop.
+**Save your desktop as a scene: every monitor, workspace and app, ready to restore.**
 
-A scene records, for each physical monitor and each workspace, the layout, the
-apps open on it, and where each floating window sat. Restoring a scene opens the apps that are missing, on the
-workspaces they belong to. Think "Coding", "Meeting", "Writing".
+<img src="docs/poster.png" alt="Scenes: the Coding scene with its two monitors and workspaces, and two more windows behind it in other themes" width="900">
 
-The window follows the Omarchy theme live (accent, light or dark, window
-rounding) and the language picked under Setup > Language.
+</div>
+
+## Why you will want it
+
+- **A scene is your whole desktop.** Every monitor and every workspace with its apps, and where each floating window sat. Think "Coding", "Meeting", "Writing".
+- **Restore only adds.** It opens the apps that are missing, on the workspaces they belong to, and never closes or moves a window you have open.
+- **It copes with the monitors you have.** A scene that names a monitor that is not plugged in is restored for the others, and tells you which one is missing.
+- **Keyboard first.** `Space` restores, `N` saves, `?` shows every key.
+- **It looks like Omarchy.** The window follows your theme live (light or dark, accent, rounding) and the language you picked under Setup > Language.
+
+![Scenes showing a scene called Coding on two monitors](docs/screenshot.png)
 
 ## Use
 
@@ -40,6 +47,12 @@ arrangement, and under them each monitor's workspaces with their layout and app
 icons. Like Omarchy's bar it always shows workspaces 1-5 of every monitor (an
 unused one reads "Empty" and claims no layout), and 6-10 only when a scene uses
 them. A monitor that isn't plugged in right now is drawn dimmed.
+
+### In other themes and situations
+
+| Light theme | A monitor that is not plugged in | Saving a scene |
+|---|---|---|
+| ![Scenes in a light theme](docs/screenshot-light.png) | ![A scene whose second monitor is not connected](docs/screenshot-travel.png) | ![Naming a new scene](docs/screenshot-save.png) |
 
 ## Command line
 
